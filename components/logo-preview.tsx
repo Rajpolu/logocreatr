@@ -105,7 +105,7 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
         <p>Customize your logo by adjusting the settings on the left panel.</p>
         <p className="mt-2">When you're happy with your design, click Download to save your logo.</p>
         <hr></hr>
-        <p>Designed and Developed with ❤️ in India by Rajpolu</p>
+        <p classname="mt-10">Designed and Developed with ❤️ in India by Rajpolu</p>
       </div>
     </div>
   )
