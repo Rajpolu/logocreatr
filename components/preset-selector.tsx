@@ -1,7 +1,6 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useRef, useEffect } from "react"
 
 interface PresetSelectorProps {
@@ -184,56 +183,64 @@ const presets = [
 export default function PresetSelector({ onSelectPreset }: PresetSelectorProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
-  // Add keyboard navigation for horizontal scrolling
+  // Enhanced horizontal scrolling for mouse wheel and trackpad
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleWheel = (e: WheelEvent) => {
       if (!scrollAreaRef.current) return
 
-      const scrollAmount = 150
+      // Prevent default behavior to avoid page scrolling
+      e.preventDefault()
 
-      if (e.key === "ArrowRight") {
-        scrollAreaRef.current.scrollLeft += scrollAmount
-      } else if (e.key === "ArrowLeft") {
-        scrollAreaRef.current.scrollLeft -= scrollAmount
-      }
+      // Determine scroll direction and amount
+      // For trackpads, use deltaX directly (horizontal gesture)
+      // For mouse wheels, use deltaY for horizontal scrolling
+      const scrollAmount = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
+
+      // Apply the scroll
+      scrollAreaRef.current.scrollLeft += scrollAmount
     }
 
     const scrollArea = scrollAreaRef.current
     if (scrollArea) {
-      scrollArea.addEventListener("keydown", handleKeyDown)
+      // Use { passive: false } to allow preventDefault()
+      scrollArea.addEventListener("wheel", handleWheel, { passive: false })
     }
 
     return () => {
       if (scrollArea) {
-        scrollArea.removeEventListener("keydown", handleKeyDown)
+        scrollArea.removeEventListener("wheel", handleWheel)
       }
     }
   }, [])
 
   return (
     <div className="relative">
-      <ScrollArea className="w-full" orientation="horizontal">
-        <div
-          ref={scrollAreaRef}
-          className="flex gap-2 pb-4 pr-4 min-w-max overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
-          tabIndex={0}
-          role="listbox"
-          aria-label="Logo presets"
-        >
-          {presets.map((preset) => (
-            <Button
-              key={preset.name}
-              variant="outline"
-              className="flex-shrink-0 whitespace-nowrap hover:bg-gray-100 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              onClick={() => onSelectPreset(preset)}
-              role="option"
-              aria-selected="false"
-            >
-              {preset.name}
-            </Button>
-          ))}
-        </div>
-      </ScrollArea>
+      <div
+        ref={scrollAreaRef}
+        className="flex gap-2 pb-4 pr-4 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+        style={{
+          scrollBehavior: "smooth",
+          WebkitOverflowScrolling: "touch",
+          msOverflowStyle: "none",
+          scrollbarWidth: "thin",
+        }}
+        tabIndex={0}
+        role="listbox"
+        aria-label="Logo presets"
+      >
+        {presets.map((preset) => (
+          <Button
+            key={preset.name}
+            variant="outline"
+            className="flex-shrink-0 whitespace-nowrap hover:bg-gray-100 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            onClick={() => onSelectPreset(preset)}
+            role="option"
+            aria-selected="false"
+          >
+            {preset.name}
+          </Button>
+        ))}
+      </div>
       <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none" />
     </div>
   )

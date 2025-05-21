@@ -20,6 +20,16 @@ interface LogoPreviewProps {
     shadow: string
     borderWidth: number
     borderColor: string
+    // Text properties
+    text: string
+    textEnabled: boolean
+    textFont: string
+    textSize: number
+    textColor: string
+    textPosition: string
+    textWeight: string
+    textStyle: string
+    textLetterSpacing: number
   }
 }
 
@@ -38,40 +48,54 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
     xl: "shadow-xl",
   }
 
-  // Ensure the logo is centered in the container
+  // Ensure the logo is centered in the container with balanced padding
   useEffect(() => {
-    const resizeObserver = new ResizeObserver(() => {
-      if (containerRef.current) {
-        const parent = containerRef.current.parentElement
-        if (parent) {
-          const parentHeight = parent.clientHeight
-          const logoHeight = containerRef.current.clientHeight
-          const marginTop = Math.max(0, (parentHeight - logoHeight) / 2)
-          containerRef.current.style.marginTop = `${marginTop}px`
-        }
-      }
-    })
-
+    // Use a simpler approach to avoid ResizeObserver loops
     if (containerRef.current) {
-      resizeObserver.observe(containerRef.current)
+      // Apply initial centering with CSS instead of continuous observation
+      containerRef.current.style.margin = "auto"
     }
 
-    return () => {
-      if (containerRef.current) {
-        resizeObserver.unobserve(containerRef.current)
-      }
-    }
+    // No need for ResizeObserver as we're using CSS centering
+    // This avoids the "ResizeObserver loop completed with undelivered notifications" error
   }, [])
+
+  // Calculate content layout based on text position
+  const getContentLayout = () => {
+    if (!settings.textEnabled || !settings.text) {
+      return "items-center justify-center"
+    }
+
+    switch (settings.textPosition) {
+      case "above":
+        return "flex-col-reverse items-center justify-center"
+      case "below":
+        return "flex-col items-center justify-center"
+      case "center":
+        return "items-center justify-center relative"
+      default:
+        return "items-center justify-center"
+    }
+  }
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full">
-      <Card className="p-8 mb-6 flex items-center justify-center">
+      <Card
+        className="p-10 mb-6 flex items-center justify-center bg-white shadow-md"
+        style={{
+          width: "440px",
+          height: "440px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <div
           id="logo-preview"
           ref={containerRef}
           style={{
-            width: "300px",
-            height: "300px",
+            width: "280px",
+            height: "280px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -85,26 +109,61 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
           }}
           className={shadowClasses[settings.shadow as keyof typeof shadowClasses]}
         >
-          {IconComponent && (
-            <IconComponent
-              style={{
-                width: `${settings.iconSize}%`,
-                height: `${settings.iconSize}%`,
-                color: settings.iconColor,
-                transform: `rotate(${settings.iconRotation}deg)`,
-                transition: "all 0.3s ease",
-              }}
-              fill={settings.iconFillOpacity > 0 ? settings.iconFillColor : "none"}
-              fillOpacity={settings.iconFillOpacity / 100}
-              strokeWidth={2}
-            />
-          )}
+          <div className={`flex ${getContentLayout()} w-full h-full`}>
+            {/* Icon */}
+            <div
+              className={`flex items-center justify-center ${
+                settings.textEnabled && settings.textPosition === "center" ? "absolute" : ""
+              }`}
+            >
+              {IconComponent && (
+                <IconComponent
+                  style={{
+                    width: `${settings.iconSize * 1.2}%`, // Increase icon size by 20%
+                    height: `${settings.iconSize * 1.2}%`, // Increase icon size by 20%
+                    color: settings.iconColor,
+                    transform: `rotate(${settings.iconRotation}deg)`,
+                    transition: "all 0.3s ease",
+                  }}
+                  fill={settings.iconFillOpacity > 0 ? settings.iconFillColor : "none"}
+                  fillOpacity={settings.iconFillOpacity / 100}
+                  strokeWidth={2}
+                />
+              )}
+            </div>
+
+            {/* Text */}
+            {settings.textEnabled && settings.text && (
+              <div
+                className={`text-center ${
+                  settings.textPosition === "center" ? "absolute z-10" : "my-2"
+                } max-w-full overflow-hidden`}
+              >
+                <p
+                  style={{
+                    fontFamily: settings.textFont,
+                    fontSize: `${settings.textSize}px`,
+                    color: settings.textColor,
+                    fontWeight: settings.textWeight,
+                    fontStyle: settings.textStyle,
+                    letterSpacing: `${settings.textLetterSpacing}px`,
+                    textShadow: settings.textPosition === "center" ? "0 0 4px rgba(0,0,0,0.5)" : "none",
+                    maxWidth: "100%",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {settings.text}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </Card>
       <div className="text-center text-gray-500 max-w-md">
         <p>Customize your logo by adjusting the settings on the left panel.</p>
-        <p className="mt-2">When you're happy with your design, click Download to save your logo.</p>
-        <p classname="mt-3">Made with ❤️ in India by Rajpolu</p>
+        <p className="mt-2">When you're happy with your design, click Export to save your logo.</p>
       </div>
     </div>
   )

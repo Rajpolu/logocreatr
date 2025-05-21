@@ -15,6 +15,16 @@ export const initialState = {
     shadow: "md",
     borderWidth: 0,
     borderColor: "#000000",
+    // Text properties
+    text: "",
+    textEnabled: false,
+    textFont: "Inter",
+    textSize: 24,
+    textColor: "#ffffff",
+    textPosition: "below", // "above", "below", "center"
+    textWeight: "normal", // "normal", "medium", "bold"
+    textStyle: "normal", // "normal", "italic"
+    textLetterSpacing: 0,
   },
   future: [],
 }

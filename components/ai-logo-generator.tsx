@@ -79,7 +79,7 @@ export default function AILogoGenerator() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={4}
-              className="resize-none"
+              className="resize-none rounded-2xl"
             />
           </div>
 
