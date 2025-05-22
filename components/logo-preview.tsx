@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import * as LucideIcons from "lucide-react"
+import GridOverlay from "@/components/grid-overlay"
 
 interface LogoPreviewProps {
   settings: {
@@ -30,6 +31,10 @@ interface LogoPreviewProps {
     textWeight: string
     textStyle: string
     textLetterSpacing: number
+    // Grid properties (optional)
+    showGrid?: boolean
+    gridSize?: number
+    gridColor?: string
   }
 }
 
@@ -106,9 +111,15 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
             padding: `${settings.padding}%`,
             border: `${settings.borderWidth}px solid ${settings.borderColor}`,
             transition: "all 0.3s ease",
+            position: "relative", // Add this for absolute positioning of grid
           }}
           className={shadowClasses[settings.shadow as keyof typeof shadowClasses]}
         >
+          <GridOverlay
+            visible={settings.showGrid || false}
+            size={settings.gridSize || 10}
+            color={settings.gridColor || "rgba(255,255,255,0.2)"}
+          />
           <div className={`flex ${getContentLayout()} w-full h-full`}>
             {/* Icon */}
             <div
@@ -119,14 +130,14 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
               {IconComponent && (
                 <IconComponent
                   style={{
-                    width: `${settings.iconSize * 1.2}%`, // Increase icon size by 20%
-                    height: `${settings.iconSize * 1.2}%`, // Increase icon size by 20%
+                    width: `${settings.iconSize * 2.0}%`, // Increased icon size by 100%
+                    height: `${settings.iconSize * 2.0}%`, // Increased icon size by 100%
                     color: settings.iconColor,
                     transform: `rotate(${settings.iconRotation}deg)`,
                     transition: "all 0.3s ease",
                   }}
-                  fill={settings.iconFillOpacity > 0 ? settings.iconFillColor : "none"}
-                  fillOpacity={settings.iconFillOpacity / 100}
+                  fill={settings.iconFillOpacity > 0 ? settings.iconFillColor : settings.iconColor}
+                  fillOpacity={settings.iconFillOpacity > 0 ? settings.iconFillOpacity / 100 : 0.2}
                   strokeWidth={2}
                 />
               )}

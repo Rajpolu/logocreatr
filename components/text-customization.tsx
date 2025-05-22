@@ -37,6 +37,19 @@ const fontOptions = [
   { value: "Trebuchet MS", label: "Trebuchet MS" },
   { value: "Impact", label: "Impact" },
   { value: "Comic Sans MS", label: "Comic Sans MS" },
+  { value: "Roboto", label: "Roboto" },
+  { value: "Open Sans", label: "Open Sans" },
+  { value: "Lato", label: "Lato" },
+  { value: "Montserrat", label: "Montserrat" },
+  { value: "Raleway", label: "Raleway" },
+  { value: "Poppins", label: "Poppins" },
+  { value: "Playfair Display", label: "Playfair Display" },
+  { value: "Merriweather", label: "Merriweather" },
+  { value: "Source Sans Pro", label: "Source Sans Pro" },
+  { value: "Ubuntu", label: "Ubuntu" },
+  { value: "Nunito", label: "Nunito" },
+  { value: "Oswald", label: "Oswald" },
+  { value: "Quicksand", label: "Quicksand" },
 ]
 
 const positionOptions = [

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Undo2, Redo2, Search, Palette, Type } from "lucide-react"
+import { Undo2, Redo2, Search, Palette, Type, Github } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Label } from "@/components/ui/label"
@@ -21,6 +21,7 @@ import AILogoGenerator from "@/components/ai-logo-generator"
 import ExportDialog from "@/components/export-dialog"
 import { historyReducer, initialState } from "@/lib/history-reducer"
 import { downloadSVG, downloadPNG } from "@/lib/download-utils"
+import VersionHistory from "@/components/version-history"
 
 export default function Home() {
   const [state, dispatch] = useReducer(historyReducer, initialState)
@@ -93,6 +94,13 @@ export default function Home() {
     [current.iconName],
   )
 
+  const handleRestoreVersion = useCallback((version, index) => {
+    dispatch({
+      type: "RESTORE_VERSION",
+      payload: { version, index },
+    })
+  }, [])
+
   return (
     <main className="min-h-screen p-4 md:p-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
@@ -105,6 +113,22 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => window.open("https://github.com/yourusername/logo-creator", "_blank")}
+                    className="rounded-full"
+                  >
+                    <Github className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>View on GitHub</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -138,6 +162,8 @@ export default function Home() {
                 <TooltipContent>Redo</TooltipContent>
               </Tooltip>
             </TooltipProvider>
+
+            <VersionHistory past={past} current={current} onRestoreVersion={handleRestoreVersion} />
 
             {/* Replace the simple download popover with the new ExportDialog */}
             <ExportDialog logoName={current.iconName || "logo"} settings={current} />
@@ -226,7 +252,7 @@ export default function Home() {
                             <Slider
                               value={[current.iconSize]}
                               min={10}
-                              max={100}
+                              max={150}
                               step={1}
                               onValueChange={(value) => handleChange("iconSize", value[0])}
                               className="my-4"
@@ -395,9 +421,54 @@ export default function Home() {
                           />
                         </div>
                       </div>
+
+                      {/* Add grid controls */}
+                      <div className="pt-4 border-t">
+                        <h4 className="text-sm font-medium mb-2">Grid Overlay</h4>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="show-grid">Show Grid</Label>
+                          <Switch
+                            id="show-grid"
+                            checked={current.showGrid}
+                            onCheckedChange={(checked) => handleChange("showGrid", checked)}
+                          />
+                        </div>
+
+                        {current.showGrid && (
+                          <>
+                            <div className="mt-4">
+                              <div className="flex justify-between mb-1">
+                                <label className="text-sm">Grid Size</label>
+                                <span className="text-sm">{current.gridSize}</span>
+                              </div>
+                              <Slider
+                                value={[current.gridSize]}
+                                min={5}
+                                max={20}
+                                step={1}
+                                onValueChange={(value) => handleChange("gridSize", value[0])}
+                                className="my-4"
+                              />
+                            </div>
+
+                            <div className="mt-4">
+                              <label className="block text-sm mb-1">Grid Color</label>
+                              <ColorPicker
+                                color={current.gridColor}
+                                onChange={(color) => handleChange("gridColor", color)}
+                                label="Grid"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   )}
                 </Card>
+                {/* Add footer at the bottom */}
+                <div className="text-center text-sm text-gray-500 mt-6 pt-4 border-t">
+                  Made with ❤️ in India by Rajpolu
+                </div>
               </div>
 
               <div className="md:col-span-2 flex flex-col items-center justify-center">
