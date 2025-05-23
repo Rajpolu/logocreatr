@@ -2,10 +2,10 @@ export const initialState = {
   past: [],
   current: {
     iconName: "Palette",
-    iconSize: 80, // Increased from 60 to 80
+    iconSize: 60,
     iconRotation: 0,
     iconColor: "#ffffff",
-    iconFillOpacity: 20, // Set a default fill opacity of 20%
+    iconFillOpacity: 0,
     iconFillColor: "#ffffff",
     backgroundColor: "#3b82f6",
     gradientColor: "#60a5fa",
@@ -18,17 +18,13 @@ export const initialState = {
     // Text properties
     text: "",
     textEnabled: false,
-    textFont: "Inter",
+    textFont: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     textSize: 24,
     textColor: "#ffffff",
     textPosition: "below", // "above", "below", "center"
     textWeight: "normal", // "normal", "medium", "bold"
     textStyle: "normal", // "normal", "italic"
     textLetterSpacing: 0,
-    // Grid properties
-    showGrid: false,
-    gridSize: 10,
-    gridColor: "rgba(255,255,255,0.2)",
   },
   future: [],
 }
@@ -39,7 +35,7 @@ export function historyReducer(state: any, action: any) {
   switch (action.type) {
     case "UPDATE":
       return {
-        past: [...past, { ...current, timestamp: Date.now() }],
+        past: [...past, current],
         current: action.payload,
         future: [],
       }
@@ -60,15 +56,6 @@ export function historyReducer(state: any, action: any) {
         past: [...past, current],
         current: next,
         future: newFuture,
-      }
-    case "RESTORE_VERSION":
-      const { version, index } = action.payload
-      const newPastUpToVersion = past.slice(0, index)
-
-      return {
-        past: newPastUpToVersion,
-        current: version,
-        future: [current, ...past.slice(index + 1), ...future],
       }
     default:
       return state

@@ -25,31 +25,75 @@ interface TextCustomizationProps {
   onChange: (key: string, value: any) => void
 }
 
+// System font stacks that are available across platforms
 const fontOptions = [
-  { value: "Inter", label: "Inter" },
-  { value: "Arial", label: "Arial" },
-  { value: "Helvetica", label: "Helvetica" },
-  { value: "Georgia", label: "Georgia" },
-  { value: "Times New Roman", label: "Times New Roman" },
-  { value: "Courier New", label: "Courier New" },
-  { value: "Verdana", label: "Verdana" },
-  { value: "Tahoma", label: "Tahoma" },
-  { value: "Trebuchet MS", label: "Trebuchet MS" },
-  { value: "Impact", label: "Impact" },
-  { value: "Comic Sans MS", label: "Comic Sans MS" },
-  { value: "Roboto", label: "Roboto" },
-  { value: "Open Sans", label: "Open Sans" },
-  { value: "Lato", label: "Lato" },
-  { value: "Montserrat", label: "Montserrat" },
-  { value: "Raleway", label: "Raleway" },
-  { value: "Poppins", label: "Poppins" },
-  { value: "Playfair Display", label: "Playfair Display" },
-  { value: "Merriweather", label: "Merriweather" },
-  { value: "Source Sans Pro", label: "Source Sans Pro" },
-  { value: "Ubuntu", label: "Ubuntu" },
-  { value: "Nunito", label: "Nunito" },
-  { value: "Oswald", label: "Oswald" },
-  { value: "Quicksand", label: "Quicksand" },
+  // Modern Sans-Serif Fonts
+  {
+    value: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    label: "System UI (Modern)",
+    className: "font-system",
+  },
+  {
+    value:
+      "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    label: "Sans-Serif (Clean)",
+    className: "font-sans",
+  },
+  {
+    value:
+      "ui-rounded, 'Hiragino Maru Gothic ProN', Quicksand, Comfortaa, Manjari, 'Arial Rounded MT', Calibri, sans-serif",
+    label: "Rounded Sans (Friendly)",
+    className: "font-rounded",
+  },
+
+  // Classic Fonts
+  {
+    value: "Georgia, Cambria, 'Times New Roman', Times, serif",
+    label: "Serif (Classic)",
+    className: "font-serif",
+  },
+  {
+    value: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    label: "Monospace (Technical)",
+    className: "font-mono",
+  },
+  {
+    value: "Helvetica, Arial, sans-serif",
+    label: "Helvetica (Clean)",
+  },
+  {
+    value: "Verdana, Geneva, Tahoma, sans-serif",
+    label: "Verdana (Readable)",
+  },
+  {
+    value: "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif",
+    label: "Trebuchet MS (Friendly)",
+  },
+
+  // Distinctive Fonts
+  {
+    value: "Impact, Haettenschweiler, 'Franklin Gothic Bold', Charcoal, 'Helvetica Inserat', 'Arial Black', sans-serif",
+    label: "Impact (Bold)",
+    className: "font-display",
+  },
+  {
+    value: "'Brush Script MT', 'Brush Script Std', 'Lucida Calligraphy', 'Lucida Handwriting', cursive",
+    label: "Script (Handwritten)",
+    className: "font-handwriting",
+  },
+  {
+    value: "Papyrus, Herculanum, Party LET, Curlz MT, Harrington, fantasy",
+    label: "Decorative",
+    className: "font-decorative",
+  },
+  {
+    value: "'Arial Black', Gadget, sans-serif",
+    label: "Arial Black (Heavy)",
+  },
+  {
+    value: "'Lucida Console', Monaco, monospace",
+    label: "Lucida Console (Tech)",
+  },
 ]
 
 const positionOptions = [
@@ -103,7 +147,7 @@ export default function TextCustomization({ settings, onChange }: TextCustomizat
               value={text}
               onChange={handleTextChange}
               onBlur={handleTextBlur}
-              className="w-full"
+              className="w-full rounded-full"
             />
           </div>
 
@@ -112,15 +156,38 @@ export default function TextCustomization({ settings, onChange }: TextCustomizat
               Font Family
             </Label>
             <Select value={settings.textFont} onValueChange={(value) => onChange("textFont", value)}>
-              <SelectTrigger id="text-font">
+              <SelectTrigger id="text-font" className="rounded-full">
                 <SelectValue placeholder="Select font" />
               </SelectTrigger>
               <SelectContent>
-                {fontOptions.map((font) => (
-                  <SelectItem key={font.value} value={font.value}>
-                    {font.label}
-                  </SelectItem>
-                ))}
+                <div className="font-categories">
+                  <div className="category-label px-3 py-1 text-xs font-semibold text-muted-foreground">
+                    Modern Sans-Serif
+                  </div>
+                  {fontOptions.slice(0, 3).map((font) => (
+                    <SelectItem key={font.value} value={font.value} className={font.className}>
+                      {font.label}
+                    </SelectItem>
+                  ))}
+
+                  <div className="category-label mt-2 px-3 py-1 text-xs font-semibold text-muted-foreground">
+                    Classic
+                  </div>
+                  {fontOptions.slice(3, 8).map((font) => (
+                    <SelectItem key={font.value} value={font.value} className={font.className}>
+                      {font.label}
+                    </SelectItem>
+                  ))}
+
+                  <div className="category-label mt-2 px-3 py-1 text-xs font-semibold text-muted-foreground">
+                    Distinctive
+                  </div>
+                  {fontOptions.slice(8).map((font) => (
+                    <SelectItem key={font.value} value={font.value} className={font.className}>
+                      {font.label}
+                    </SelectItem>
+                  ))}
+                </div>
               </SelectContent>
             </Select>
           </div>
@@ -159,7 +226,7 @@ export default function TextCustomization({ settings, onChange }: TextCustomizat
               Text Position
             </Label>
             <Select value={settings.textPosition} onValueChange={(value) => onChange("textPosition", value)}>
-              <SelectTrigger id="text-position">
+              <SelectTrigger id="text-position" className="rounded-full">
                 <SelectValue placeholder="Select position" />
               </SelectTrigger>
               <SelectContent>
@@ -177,7 +244,7 @@ export default function TextCustomization({ settings, onChange }: TextCustomizat
               Font Weight
             </Label>
             <Select value={settings.textWeight} onValueChange={(value) => onChange("textWeight", value)}>
-              <SelectTrigger id="text-weight">
+              <SelectTrigger id="text-weight" className="rounded-full">
                 <SelectValue placeholder="Select weight" />
               </SelectTrigger>
               <SelectContent>
@@ -195,7 +262,7 @@ export default function TextCustomization({ settings, onChange }: TextCustomizat
               Font Style
             </Label>
             <Select value={settings.textStyle} onValueChange={(value) => onChange("textStyle", value)}>
-              <SelectTrigger id="text-style">
+              <SelectTrigger id="text-style" className="rounded-full">
                 <SelectValue placeholder="Select style" />
               </SelectTrigger>
               <SelectContent>

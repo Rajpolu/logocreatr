@@ -22,83 +22,82 @@ export const downloadSVG = (elementId: string, fileName: string) => {
     svg.setAttribute("xmlns", "http://www.w3.org/2000/svg")
     svg.setAttribute("version", "1.1")
 
-    // Create background rectangle only if the background is not transparent
-    if (styles.backgroundColor !== "transparent" && styles.backgroundColor !== "rgba(0, 0, 0, 0)") {
-      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-      rect.setAttribute("width", "100%")
-      rect.setAttribute("height", "100%")
+    // Create background rectangle
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+    rect.setAttribute("width", "100%")
+    rect.setAttribute("height", "100%")
 
-      // Handle background - could be gradient or solid color
-      if (styles.background.includes("linear-gradient")) {
-        // For gradient backgrounds, create a linearGradient element
-        const gradientId = "logoGradient"
-        const linearGradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient")
-        linearGradient.setAttribute("id", gradientId)
-        linearGradient.setAttribute("x1", "0%")
-        linearGradient.setAttribute("y1", "0%")
-        linearGradient.setAttribute("x2", "100%")
-        linearGradient.setAttribute("y2", "100%")
+    // Handle background - could be gradient or solid color
+    if (styles.background.includes("linear-gradient")) {
+      // For gradient backgrounds, create a linearGradient element
+      const gradientId = "logoGradient"
+      const linearGradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient")
+      linearGradient.setAttribute("id", gradientId)
+      linearGradient.setAttribute("x1", "0%")
+      linearGradient.setAttribute("y1", "0%")
+      linearGradient.setAttribute("x2", "100%")
+      linearGradient.setAttribute("y2", "100%")
 
-        // Extract colors from the gradient
-        // Try different regex patterns to handle various gradient formats
-        let colors: string[] = []
-        const gradientPatterns = [
-          /linear-gradient\s*([^,]+),\s*([^)]+)\s*/,
-          /linear-gradient\s*to\s+[^,]+,\s*([^,]+),\s*([^)]+)\s*/,
-          /linear-gradient\s*([0-9]+deg),\s*([^,]+),\s*([^)]+)\s*/,
-        ]
+      // Extract colors from the gradient
+      // Try different regex patterns to handle various gradient formats
+      let colors: string[] = []
+      const gradientPatterns = [
+        /linear-gradient\s*$$\s*([^,]+),\s*([^)]+)\s*$$/,
+        /linear-gradient\s*$$\s*to\s+[^,]+,\s*([^,]+),\s*([^)]+)\s*$$/,
+        /linear-gradient\s*$$\s*([0-9]+deg),\s*([^,]+),\s*([^)]+)\s*$$/,
+      ]
 
-        let match = null
-        for (const pattern of gradientPatterns) {
-          match = styles.background.match(pattern)
-          if (match) {
-            // If the pattern has 3 groups, the colors are in groups 2 and 3
-            if (match.length >= 4) {
-              colors = [match[2], match[3]].map((c) => c.trim())
-            }
-            // If the pattern has 2 groups, the colors are in groups 1 and 2
-            else if (match.length >= 3) {
-              colors = [match[1], match[2]].map((c) => c.trim())
-            }
-            break
+      let match = null
+      for (const pattern of gradientPatterns) {
+        match = styles.background.match(pattern)
+        if (match) {
+          // If the pattern has 3 groups, the colors are in groups 2 and 3
+          if (match.length >= 4) {
+            colors = [match[2], match[3]].map((c) => c.trim())
           }
+          // If the pattern has 2 groups, the colors are in groups 1 and 2
+          else if (match.length >= 3) {
+            colors = [match[1], match[2]].map((c) => c.trim())
+          }
+          break
         }
+      }
 
-        if (colors.length >= 2) {
-          // Create stops
-          colors.forEach((color, index) => {
-            const stop = document.createElementNS("http://www.w3.org/2000/svg", "stop")
-            stop.setAttribute("offset", index === 0 ? "0%" : "100%")
-            stop.setAttribute("stop-color", color)
-            linearGradient.appendChild(stop)
-          })
+      if (colors.length >= 2) {
+        // Create stops
+        colors.forEach((color, index) => {
+          const stop = document.createElementNS("http://www.w3.org/2000/svg", "stop")
+          stop.setAttribute("offset", index === 0 ? "0%" : "100%")
+          stop.setAttribute("stop-color", color)
+          linearGradient.appendChild(stop)
+        })
 
-          svg.appendChild(linearGradient)
-          rect.setAttribute("fill", `url(#${gradientId})`)
-        } else {
-          // Fallback if gradient parsing fails
-          rect.setAttribute("fill", styles.backgroundColor || "#ffffff")
-        }
+        svg.appendChild(linearGradient)
+        rect.setAttribute("fill", `url(#${gradientId})`)
       } else {
-        // For solid backgrounds
+        // Fallback if gradient parsing fails
         rect.setAttribute("fill", styles.backgroundColor || "#ffffff")
       }
-
-      // Add border radius
-      const borderRadius = styles.borderRadius
-      if (borderRadius && borderRadius !== "0px") {
-        rect.setAttribute("rx", borderRadius)
-      }
-
-      // Add border if present
-      const borderWidth = Number.parseInt(styles.borderWidth)
-      if (borderWidth > 0) {
-        rect.setAttribute("stroke", styles.borderColor)
-        rect.setAttribute("stroke-width", styles.borderWidth)
-      }
-
-      svg.appendChild(rect)
+    } else {
+      // For solid backgrounds
+      rect.setAttribute("fill", styles.backgroundColor || "#ffffff")
     }
+
+    // Add border radius
+    const borderRadius = styles.borderRadius
+    if (borderRadius && borderRadius !== "0px") {
+      rect.setAttribute("rx", borderRadius)
+      rect.setAttribute("ry", borderRadius)
+    }
+
+    // Add border if present
+    const borderWidth = Number.parseInt(styles.borderWidth)
+    if (borderWidth > 0) {
+      rect.setAttribute("stroke", styles.borderColor)
+      rect.setAttribute("stroke-width", styles.borderWidth)
+    }
+
+    svg.appendChild(rect)
 
     // Create a group for the content
     const contentGroup = document.createElementNS("http://www.w3.org/2000/svg", "g")
@@ -176,7 +175,7 @@ export const downloadSVG = (elementId: string, fileName: string) => {
 
         // Apply rotation if needed
         if (styles.transform && styles.transform.includes("rotate")) {
-          const rotateMatch = styles.transform.match(/rotate\s*([^)]+)deg\s*/)
+          const rotateMatch = styles.transform.match(/rotate\s*$$\s*([^)]+)deg\s*$$/)
           if (rotateMatch && rotateMatch[1]) {
             const rotation = Number.parseFloat(rotateMatch[1])
 

@@ -1,9 +1,8 @@
 "use client"
 
-import { useRef, useEffect } from "react"
+import { useRef } from "react"
 import { Card } from "@/components/ui/card"
 import * as LucideIcons from "lucide-react"
-import GridOverlay from "@/components/grid-overlay"
 
 interface LogoPreviewProps {
   settings: {
@@ -31,10 +30,6 @@ interface LogoPreviewProps {
     textWeight: string
     textStyle: string
     textLetterSpacing: number
-    // Grid properties (optional)
-    showGrid?: boolean
-    gridSize?: number
-    gridColor?: string
   }
 }
 
@@ -52,18 +47,6 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
     lg: "shadow-lg",
     xl: "shadow-xl",
   }
-
-  // Ensure the logo is centered in the container with balanced padding
-  useEffect(() => {
-    // Use a simpler approach to avoid ResizeObserver loops
-    if (containerRef.current) {
-      // Apply initial centering with CSS instead of continuous observation
-      containerRef.current.style.margin = "auto"
-    }
-
-    // No need for ResizeObserver as we're using CSS centering
-    // This avoids the "ResizeObserver loop completed with undelivered notifications" error
-  }, [])
 
   // Calculate content layout based on text position
   const getContentLayout = () => {
@@ -83,6 +66,20 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
     }
   }
 
+  // Calculate the effective icon size - maximized while respecting padding
+  const getEffectiveIconSize = () => {
+    // Base size is the user's setting, but we'll scale it up
+    const baseSize = settings.iconSize * 1.5 // Increase by 50% for better visibility
+
+    // If text is enabled, we need to leave space for it
+    if (settings.textEnabled && settings.text) {
+      return settings.textPosition === "center" ? baseSize : baseSize * 0.85
+    }
+
+    // Without text, we can maximize the icon size
+    return baseSize
+  }
+
   return (
     <div className="flex flex-col items-center justify-center h-full w-full">
       <Card
@@ -99,8 +96,8 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
           id="logo-preview"
           ref={containerRef}
           style={{
-            width: "280px",
-            height: "280px",
+            width: "320px", // Increased from 280px for more space
+            height: "320px", // Increased from 280px for more space
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -111,33 +108,37 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
             padding: `${settings.padding}%`,
             border: `${settings.borderWidth}px solid ${settings.borderColor}`,
             transition: "all 0.3s ease",
-            position: "relative", // Add this for absolute positioning of grid
+            position: "relative", // Ensure proper positioning of children
           }}
           className={shadowClasses[settings.shadow as keyof typeof shadowClasses]}
         >
-          <GridOverlay
-            visible={settings.showGrid || false}
-            size={settings.gridSize || 10}
-            color={settings.gridColor || "rgba(255,255,255,0.2)"}
-          />
           <div className={`flex ${getContentLayout()} w-full h-full`}>
             {/* Icon */}
             <div
               className={`flex items-center justify-center ${
                 settings.textEnabled && settings.textPosition === "center" ? "absolute" : ""
               }`}
+              style={{
+                width: "100%",
+                height: settings.textEnabled && settings.text && settings.textPosition !== "center" ? "80%" : "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
               {IconComponent && (
                 <IconComponent
                   style={{
-                    width: `${settings.iconSize * 2.0}%`, // Increased icon size by 100%
-                    height: `${settings.iconSize * 2.0}%`, // Increased icon size by 100%
+                    width: `${getEffectiveIconSize()}%`,
+                    height: `${getEffectiveIconSize()}%`,
                     color: settings.iconColor,
                     transform: `rotate(${settings.iconRotation}deg)`,
                     transition: "all 0.3s ease",
+                    maxWidth: "90%", // Prevent overflow
+                    maxHeight: "90%", // Prevent overflow
                   }}
-                  fill={settings.iconFillOpacity > 0 ? settings.iconFillColor : settings.iconColor}
-                  fillOpacity={settings.iconFillOpacity > 0 ? settings.iconFillOpacity / 100 : 0.2}
+                  fill={settings.iconFillOpacity > 0 ? settings.iconFillColor : "none"}
+                  fillOpacity={settings.iconFillOpacity / 100}
                   strokeWidth={2}
                 />
               )}
@@ -149,6 +150,13 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
                 className={`text-center ${
                   settings.textPosition === "center" ? "absolute z-10" : "my-2"
                 } max-w-full overflow-hidden`}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: settings.textPosition !== "center" ? "20%" : "auto",
+                }}
               >
                 <p
                   style={{
@@ -163,6 +171,8 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     wordBreak: "break-word",
+                    margin: 0,
+                    padding: 0,
                   }}
                 >
                   {settings.text}

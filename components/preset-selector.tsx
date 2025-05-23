@@ -24,6 +24,7 @@ const presets = [
     shadow: "md",
     borderWidth: 0,
     borderColor: "#000000",
+    textFont: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
   },
   {
     name: "Vibrant Gradient",
@@ -41,6 +42,8 @@ const presets = [
     shadow: "lg",
     borderWidth: 0,
     borderColor: "#000000",
+    textFont:
+      "ui-rounded, 'Hiragino Maru Gothic ProN', Quicksand, Comfortaa, Manjari, 'Arial Rounded MT', Calibri, sans-serif",
   },
   {
     name: "Corporate Blue",
@@ -58,6 +61,7 @@ const presets = [
     shadow: "md",
     borderWidth: 0,
     borderColor: "#000000",
+    textFont: "Helvetica, Arial, sans-serif",
   },
   {
     name: "Eco Green",
@@ -75,6 +79,7 @@ const presets = [
     shadow: "md",
     borderWidth: 0,
     borderColor: "#000000",
+    textFont: "Georgia, Cambria, 'Times New Roman', Times, serif",
   },
   {
     name: "Playful Rounded",
@@ -92,6 +97,8 @@ const presets = [
     shadow: "lg",
     borderWidth: 0,
     borderColor: "#000000",
+    textFont:
+      "ui-rounded, 'Hiragino Maru Gothic ProN', Quicksand, Comfortaa, Manjari, 'Arial Rounded MT', Calibri, sans-serif",
   },
   {
     name: "Outlined",
@@ -109,6 +116,7 @@ const presets = [
     shadow: "sm",
     borderWidth: 2,
     borderColor: "#000000",
+    textFont: "Helvetica, Arial, sans-serif",
   },
   {
     name: "Flat Design",
@@ -126,6 +134,7 @@ const presets = [
     shadow: "none",
     borderWidth: 0,
     borderColor: "#000000",
+    textFont: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
   },
   {
     name: "Neon Glow",
@@ -143,6 +152,7 @@ const presets = [
     shadow: "xl",
     borderWidth: 2,
     borderColor: "#00ffaa",
+    textFont: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
   {
     name: "Tech Dark",
@@ -160,6 +170,7 @@ const presets = [
     shadow: "md",
     borderWidth: 0,
     borderColor: "#000000",
+    textFont: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
   {
     name: "Pastel Dream",
@@ -177,6 +188,8 @@ const presets = [
     shadow: "sm",
     borderWidth: 0,
     borderColor: "#000000",
+    textFont:
+      "ui-rounded, 'Hiragino Maru Gothic ProN', Quicksand, Comfortaa, Manjari, 'Arial Rounded MT', Calibri, sans-serif",
   },
 ]
 
