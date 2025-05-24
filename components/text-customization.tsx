@@ -25,74 +25,190 @@ interface TextCustomizationProps {
   onChange: (key: string, value: any) => void
 }
 
-// System font stacks that are available across platforms
+// Expanded font selection with trending and popular fonts
 const fontOptions = [
-  // Modern Sans-Serif Fonts
+  // Trending Modern Fonts
   {
-    value: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    value: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    label: "SF Pro Display (Apple)",
+    category: "trending",
+  },
+  {
+    value: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     label: "System UI (Modern)",
-    className: "font-system",
+    category: "trending",
   },
   {
-    value:
-      "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-    label: "Sans-Serif (Clean)",
-    className: "font-sans",
+    value: "'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif",
+    label: "Segoe UI Variable (Microsoft)",
+    category: "trending",
   },
   {
-    value:
-      "ui-rounded, 'Hiragino Maru Gothic ProN', Quicksand, Comfortaa, Manjari, 'Arial Rounded MT', Calibri, sans-serif",
+    value: "ui-rounded, 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Quicksand, Comfortaa, sans-serif",
     label: "Rounded Sans (Friendly)",
-    className: "font-rounded",
+    category: "trending",
+  },
+  {
+    value: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+    label: "Helvetica Neue (Clean)",
+    category: "trending",
+  },
+
+  // Popular Sans-Serif
+  {
+    value: "Roboto, 'Helvetica Neue', Arial, sans-serif",
+    label: "Roboto (Google)",
+    category: "popular",
+  },
+  {
+    value: "'Open Sans', 'Helvetica Neue', Arial, sans-serif",
+    label: "Open Sans (Readable)",
+    category: "popular",
+  },
+  {
+    value: "Lato, 'Helvetica Neue', Arial, sans-serif",
+    label: "Lato (Humanist)",
+    category: "popular",
+  },
+  {
+    value: "Montserrat, 'Helvetica Neue', Arial, sans-serif",
+    label: "Montserrat (Geometric)",
+    category: "popular",
+  },
+  {
+    value: "Poppins, 'Helvetica Neue', Arial, sans-serif",
+    label: "Poppins (Rounded)",
+    category: "popular",
+  },
+  {
+    value: "Source Sans Pro, 'Helvetica Neue', Arial, sans-serif",
+    label: "Source Sans Pro (Adobe)",
+    category: "popular",
   },
 
   // Classic Fonts
   {
     value: "Georgia, Cambria, 'Times New Roman', Times, serif",
-    label: "Serif (Classic)",
-    className: "font-serif",
+    label: "Georgia (Serif)",
+    category: "classic",
   },
   {
-    value: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-    label: "Monospace (Technical)",
-    className: "font-mono",
+    value: "'Times New Roman', Times, serif",
+    label: "Times New Roman (Traditional)",
+    category: "classic",
   },
   {
-    value: "Helvetica, Arial, sans-serif",
-    label: "Helvetica (Clean)",
+    value: "Garamond, 'Times New Roman', serif",
+    label: "Garamond (Elegant)",
+    category: "classic",
+  },
+  {
+    value: "Palatino, 'Palatino Linotype', 'Book Antiqua', serif",
+    label: "Palatino (Calligraphic)",
+    category: "classic",
+  },
+  {
+    value: "Arial, Helvetica, sans-serif",
+    label: "Arial (Universal)",
+    category: "classic",
   },
   {
     value: "Verdana, Geneva, Tahoma, sans-serif",
-    label: "Verdana (Readable)",
-  },
-  {
-    value: "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif",
-    label: "Trebuchet MS (Friendly)",
+    label: "Verdana (Screen)",
+    category: "classic",
   },
 
-  // Distinctive Fonts
+  // Display & Decorative
   {
-    value: "Impact, Haettenschweiler, 'Franklin Gothic Bold', Charcoal, 'Helvetica Inserat', 'Arial Black', sans-serif",
+    value: "Impact, Haettenschweiler, 'Franklin Gothic Bold', Charcoal, sans-serif",
     label: "Impact (Bold)",
-    className: "font-display",
-  },
-  {
-    value: "'Brush Script MT', 'Brush Script Std', 'Lucida Calligraphy', 'Lucida Handwriting', cursive",
-    label: "Script (Handwritten)",
-    className: "font-handwriting",
-  },
-  {
-    value: "Papyrus, Herculanum, Party LET, Curlz MT, Harrington, fantasy",
-    label: "Decorative",
-    className: "font-decorative",
+    category: "display",
   },
   {
     value: "'Arial Black', Gadget, sans-serif",
     label: "Arial Black (Heavy)",
+    category: "display",
   },
   {
-    value: "'Lucida Console', Monaco, monospace",
-    label: "Lucida Console (Tech)",
+    value: "Oswald, Impact, 'Franklin Gothic Bold', sans-serif",
+    label: "Oswald (Condensed)",
+    category: "display",
+  },
+  {
+    value: "'Bebas Neue', Impact, 'Franklin Gothic Bold', sans-serif",
+    label: "Bebas Neue (Strong)",
+    category: "display",
+  },
+  {
+    value: "Playfair Display, Georgia, serif",
+    label: "Playfair Display (Elegant)",
+    category: "display",
+  },
+
+  // Script & Handwriting
+  {
+    value: "'Brush Script MT', 'Brush Script Std', cursive",
+    label: "Brush Script (Casual)",
+    category: "script",
+  },
+  {
+    value: "'Lucida Handwriting', 'Brush Script MT', cursive",
+    label: "Lucida Handwriting",
+    category: "script",
+  },
+  {
+    value: "Pacifico, 'Brush Script MT', cursive",
+    label: "Pacifico (Playful)",
+    category: "script",
+  },
+  {
+    value: "'Dancing Script', 'Brush Script MT', cursive",
+    label: "Dancing Script (Flowing)",
+    category: "script",
+  },
+
+  // Monospace & Technical
+  {
+    value: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    label: "SF Mono (Apple)",
+    category: "monospace",
+  },
+  {
+    value: "'Cascadia Code', SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    label: "Cascadia Code (Microsoft)",
+    category: "monospace",
+  },
+  {
+    value: "'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    label: "JetBrains Mono (Developer)",
+    category: "monospace",
+  },
+  {
+    value: "'Fira Code', SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    label: "Fira Code (Ligatures)",
+    category: "monospace",
+  },
+  {
+    value: "'Courier New', Courier, monospace",
+    label: "Courier New (Classic)",
+    category: "monospace",
+  },
+
+  // Experimental & Unique
+  {
+    value: "Papyrus, Herculanum, fantasy",
+    label: "Papyrus (Ancient)",
+    category: "experimental",
+  },
+  {
+    value: "'Comic Sans MS', cursive",
+    label: "Comic Sans MS (Casual)",
+    category: "experimental",
+  },
+  {
+    value: "Chalkduster, 'Bradley Hand', cursive",
+    label: "Chalkduster (Textured)",
+    category: "experimental",
   },
 ]
 
@@ -103,14 +219,21 @@ const positionOptions = [
 ]
 
 const weightOptions = [
-  { value: "normal", label: "Normal" },
-  { value: "medium", label: "Medium" },
-  { value: "bold", label: "Bold" },
+  { value: "100", label: "Thin" },
+  { value: "200", label: "Extra Light" },
+  { value: "300", label: "Light" },
+  { value: "normal", label: "Normal (400)" },
+  { value: "500", label: "Medium" },
+  { value: "600", label: "Semi Bold" },
+  { value: "bold", label: "Bold (700)" },
+  { value: "800", label: "Extra Bold" },
+  { value: "900", label: "Black" },
 ]
 
 const styleOptions = [
   { value: "normal", label: "Normal" },
   { value: "italic", label: "Italic" },
+  { value: "oblique", label: "Oblique" },
 ]
 
 export default function TextCustomization({ settings, onChange }: TextCustomizationProps) {
@@ -122,6 +245,26 @@ export default function TextCustomization({ settings, onChange }: TextCustomizat
 
   const handleTextBlur = () => {
     onChange("text", text)
+  }
+
+  // Group fonts by category
+  const fontsByCategory = fontOptions.reduce(
+    (acc, font) => {
+      if (!acc[font.category]) acc[font.category] = []
+      acc[font.category].push(font)
+      return acc
+    },
+    {} as Record<string, typeof fontOptions>,
+  )
+
+  const categoryLabels = {
+    trending: "🔥 Trending",
+    popular: "⭐ Popular",
+    classic: "📚 Classic",
+    display: "🎨 Display",
+    script: "✍️ Script",
+    monospace: "💻 Monospace",
+    experimental: "🧪 Experimental",
   }
 
   return (
@@ -159,35 +302,19 @@ export default function TextCustomization({ settings, onChange }: TextCustomizat
               <SelectTrigger id="text-font" className="rounded-full">
                 <SelectValue placeholder="Select font" />
               </SelectTrigger>
-              <SelectContent>
-                <div className="font-categories">
-                  <div className="category-label px-3 py-1 text-xs font-semibold text-muted-foreground">
-                    Modern Sans-Serif
+              <SelectContent className="max-h-80">
+                {Object.entries(fontsByCategory).map(([category, fonts]) => (
+                  <div key={category}>
+                    <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                      {categoryLabels[category as keyof typeof categoryLabels] || category}
+                    </div>
+                    {fonts.map((font) => (
+                      <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                        {font.label}
+                      </SelectItem>
+                    ))}
                   </div>
-                  {fontOptions.slice(0, 3).map((font) => (
-                    <SelectItem key={font.value} value={font.value} className={font.className}>
-                      {font.label}
-                    </SelectItem>
-                  ))}
-
-                  <div className="category-label mt-2 px-3 py-1 text-xs font-semibold text-muted-foreground">
-                    Classic
-                  </div>
-                  {fontOptions.slice(3, 8).map((font) => (
-                    <SelectItem key={font.value} value={font.value} className={font.className}>
-                      {font.label}
-                    </SelectItem>
-                  ))}
-
-                  <div className="category-label mt-2 px-3 py-1 text-xs font-semibold text-muted-foreground">
-                    Distinctive
-                  </div>
-                  {fontOptions.slice(8).map((font) => (
-                    <SelectItem key={font.value} value={font.value} className={font.className}>
-                      {font.label}
-                    </SelectItem>
-                  ))}
-                </div>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -203,7 +330,7 @@ export default function TextCustomization({ settings, onChange }: TextCustomizat
               id="text-size"
               value={[settings.textSize]}
               min={8}
-              max={72}
+              max={120}
               step={1}
               onValueChange={(value) => onChange("textSize", value[0])}
               className="my-4"
@@ -285,8 +412,8 @@ export default function TextCustomization({ settings, onChange }: TextCustomizat
             <Slider
               id="text-letter-spacing"
               value={[settings.textLetterSpacing]}
-              min={-2}
-              max={10}
+              min={-5}
+              max={20}
               step={0.5}
               onValueChange={(value) => onChange("textLetterSpacing", value[0])}
               className="my-4"

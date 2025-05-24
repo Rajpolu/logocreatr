@@ -19,16 +19,14 @@ import PresetSelector from "@/components/preset-selector"
 import TextCustomization from "@/components/text-customization"
 import AILogoGenerator from "@/components/ai-logo-generator"
 import ExportDialog from "@/components/export-dialog"
+import ExportTest from "@/components/export-test"
 import { historyReducer, initialState } from "@/lib/history-reducer"
-import { downloadSVG, downloadPNG } from "@/lib/download-utils"
 
 export default function Home() {
   const [state, dispatch] = useReducer(historyReducer, initialState)
   const { current, past, future } = state
 
   const [searchTerm, setSearchTerm] = useState("")
-  const [downloadLoading, setDownloadLoading] = useState<string | null>(null)
-  const [downloadPopoverOpen, setDownloadPopoverOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<string>("icon") // "icon", "text", "background"
 
   const handleChange = useCallback(
@@ -63,34 +61,6 @@ export default function Home() {
       })
     },
     [current],
-  )
-
-  const handleDownload = useCallback(
-    async (format: "svg" | "png") => {
-      try {
-        setDownloadLoading(format)
-
-        let success = false
-        if (format === "svg") {
-          success = downloadSVG("logo-preview", current.iconName || "logo")
-        } else {
-          success = await downloadPNG("logo-preview", current.iconName || "logo")
-        }
-
-        if (success) {
-          // Close the popover after successful download
-          setTimeout(() => {
-            setDownloadPopoverOpen(false)
-          }, 500)
-        }
-      } catch (error) {
-        console.error(`Error downloading ${format}:`, error)
-        alert(`Failed to download ${format}. Please try again.`)
-      } finally {
-        setDownloadLoading(null)
-      }
-    },
-    [current.iconName],
   )
 
   return (
@@ -139,7 +109,10 @@ export default function Home() {
               </Tooltip>
             </TooltipProvider>
 
-            {/* Replace the simple download popover with the new ExportDialog */}
+            {/* Add the test component */}
+            <ExportTest settings={current} />
+
+            {/* Export dialog */}
             <ExportDialog logoName={current.iconName || "logo"} settings={current} />
           </div>
         </header>
