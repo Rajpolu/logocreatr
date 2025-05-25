@@ -19,7 +19,7 @@ import PresetSelector from "@/components/preset-selector"
 import TextCustomization from "@/components/text-customization"
 import AILogoGenerator from "@/components/ai-logo-generator"
 import ExportDialog from "@/components/export-dialog"
-import ExportTest from "@/components/export-test"
+import FeedbackDialog from "@/components/feedback-dialog"
 import { historyReducer, initialState } from "@/lib/history-reducer"
 
 export default function Home() {
@@ -67,11 +67,13 @@ export default function Home() {
     <main className="min-h-screen p-4 md:p-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         <header className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-2">
-            <div className="bg-black p-2 rounded">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 p-2 rounded-xl shadow-lg">
               <Palette className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold">Logo Creator</h1>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
+              Lumo
+            </h1>
           </div>
 
           <div className="flex items-center gap-2">
@@ -109,8 +111,8 @@ export default function Home() {
               </Tooltip>
             </TooltipProvider>
 
-            {/* Add the test component */}
-            <ExportTest settings={current} />
+            {/* Feedback button */}
+            <FeedbackDialog />
 
             {/* Export dialog */}
             <ExportDialog logoName={current.iconName || "logo"} settings={current} />

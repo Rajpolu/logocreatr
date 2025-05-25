@@ -115,14 +115,14 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
         </DialogHeader>
 
         <Tabs defaultValue="format" className="mt-4">
-          <TabsList className="grid grid-cols-3 mb-4 rounded-full">
-            <TabsTrigger value="format" className="rounded-full">
+          <TabsList className="grid grid-cols-3 mb-4 rounded-lg">
+            <TabsTrigger value="format" className="rounded-lg">
               Format
             </TabsTrigger>
-            <TabsTrigger value="size" className="rounded-full">
+            <TabsTrigger value="size" className="rounded-lg">
               Size
             </TabsTrigger>
-            <TabsTrigger value="options" className="rounded-full">
+            <TabsTrigger value="options" className="rounded-lg">
               Options
             </TabsTrigger>
           </TabsList>
@@ -130,7 +130,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
           <TabsContent value="format" className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div
-                className={`border rounded-full p-4 text-center cursor-pointer transition-all ${
+                className={`border rounded-lg p-4 text-center cursor-pointer transition-all ${
                   format === "svg" ? "border-primary bg-primary/10" : "hover:bg-muted"
                 }`}
                 onClick={() => setFormat("svg")}
@@ -139,7 +139,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
                 <div className="text-xs text-muted-foreground">Vector format, scalable</div>
               </div>
               <div
-                className={`border rounded-full p-4 text-center cursor-pointer transition-all ${
+                className={`border rounded-lg p-4 text-center cursor-pointer transition-all ${
                   format === "png" ? "border-primary bg-primary/10" : "hover:bg-muted"
                 }`}
                 onClick={() => setFormat("png")}
@@ -148,7 +148,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
                 <div className="text-xs text-muted-foreground">Raster format with transparency</div>
               </div>
               <div
-                className={`border rounded-full p-4 text-center cursor-pointer transition-all ${
+                className={`border rounded-lg p-4 text-center cursor-pointer transition-all ${
                   format === "jpeg" ? "border-primary bg-primary/10" : "hover:bg-muted"
                 }`}
                 onClick={() => setFormat("jpeg")}
@@ -157,7 +157,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
                 <div className="text-xs text-muted-foreground">Compressed, no transparency</div>
               </div>
               <div
-                className={`border rounded-full p-4 text-center cursor-pointer transition-all ${
+                className={`border rounded-lg p-4 text-center cursor-pointer transition-all ${
                   format === "pdf" ? "border-primary bg-primary/10" : "hover:bg-muted"
                 }`}
                 onClick={() => setFormat("pdf")}
@@ -173,7 +173,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
               <div>
                 <Label htmlFor="size-option">Size Presets</Label>
                 <Select value={sizeOption} onValueChange={setSizeOption}>
-                  <SelectTrigger id="size-option" className="rounded-full">
+                  <SelectTrigger id="size-option" className="rounded-lg">
                     <SelectValue placeholder="Select size" />
                   </SelectTrigger>
                   <SelectContent>
@@ -207,7 +207,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
                       max="4096"
                       value={customWidth}
                       onChange={(e) => setCustomWidth(Number(e.target.value))}
-                      className="rounded-full"
+                      className="rounded-lg"
                     />
                   </div>
                   <div className="space-y-2">
@@ -219,7 +219,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
                       max="4096"
                       value={customHeight}
                       onChange={(e) => setCustomHeight(Number(e.target.value))}
-                      className="rounded-full"
+                      className="rounded-lg"
                     />
                   </div>
                 </div>
@@ -264,7 +264,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
                       type="text"
                       value={jpegBackground}
                       onChange={(e) => setJpegBackground(e.target.value)}
-                      className="flex-1 rounded-full"
+                      className="flex-1 rounded-lg"
                     />
                   </div>
                 </div>
@@ -276,7 +276,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
                 <div>
                   <Label htmlFor="pdf-size">PDF Page Size</Label>
                   <Select value={pdfSize} onValueChange={setPdfSize}>
-                    <SelectTrigger id="pdf-size" className="rounded-full">
+                    <SelectTrigger id="pdf-size" className="rounded-lg">
                       <SelectValue placeholder="Select page size" />
                     </SelectTrigger>
                     <SelectContent>
@@ -290,7 +290,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
                 <div>
                   <Label htmlFor="pdf-orientation">Orientation</Label>
                   <Select value={pdfOrientation} onValueChange={setPdfOrientation}>
-                    <SelectTrigger id="pdf-orientation" className="rounded-full">
+                    <SelectTrigger id="pdf-orientation" className="rounded-lg">
                       <SelectValue placeholder="Select orientation" />
                     </SelectTrigger>
                     <SelectContent>
@@ -322,7 +322,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
         </Tabs>
 
         <div className="flex justify-end mt-4">
-          <Button onClick={handleExport} disabled={loading} className="rounded-full">
+          <Button onClick={handleExport} disabled={loading} className="rounded-lg">
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
