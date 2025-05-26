@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useReducer, useCallback } from "react"
+import { useState, useReducer, useCallback, useMemo, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
@@ -22,46 +22,146 @@ import ExportDialog from "@/components/export-dialog"
 import FeedbackDialog from "@/components/feedback-dialog"
 import { historyReducer, initialState } from "@/lib/history-reducer"
 
+// Debounce hook for performance optimization
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+
+  return debouncedValue
+}
+
+// Throttle hook for performance optimization
+function useThrottle<T extends (...args: any[]) => any>(func: T, delay: number): T {
+  const lastRun = useRef(Date.now())
+
+  return useCallback(
+    ((...args: Parameters<T>) => {
+      if (Date.now() - lastRun.current >= delay) {
+        func(...args)
+        lastRun.current = Date.now()
+      }
+    }) as T,
+    [func, delay],
+  )
+}
+
 export default function Home() {
   const [state, dispatch] = useReducer(historyReducer, initialState)
   const { current, past, future } = state
 
   const [searchTerm, setSearchTerm] = useState("")
-  const [activeTab, setActiveTab] = useState<string>("icon") // "icon", "text", "background"
+  const [activeTab, setActiveTab] = useState<string>("icon")
+  const [isLoading, setIsLoading] = useState(false)
 
+  // Debounce search term for better performance
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
+  // Throttle change handler to prevent excessive updates
+  const throttledHandleChange = useThrottle(
+    useCallback(
+      (key: string, value: any) => {
+        dispatch({
+          type: "UPDATE",
+          payload: {
+            ...current,
+            [key]: value,
+          },
+        })
+      },
+      [current],
+    ),
+    50, // 50ms throttle
+  )
+
+  // Optimized change handler with immediate UI feedback
   const handleChange = useCallback(
     (key: string, value: any) => {
-      dispatch({
-        type: "UPDATE",
-        payload: {
-          ...current,
-          [key]: value,
-        },
-      })
+      // For critical UI updates, apply immediately
+      if (key === "iconName" || key === "textEnabled" || key === "activeTab") {
+        dispatch({
+          type: "UPDATE",
+          payload: {
+            ...current,
+            [key]: value,
+          },
+        })
+      } else {
+        // For other updates, use throttled version
+        throttledHandleChange(key, value)
+      }
     },
-    [current],
+    [current, throttledHandleChange],
   )
 
   const handleUndo = useCallback(() => {
-    dispatch({ type: "UNDO" })
-  }, [])
+    if (past.length > 0) {
+      dispatch({ type: "UNDO" })
+    }
+  }, [past.length])
 
   const handleRedo = useCallback(() => {
-    dispatch({ type: "REDO" })
-  }, [])
+    if (future.length > 0) {
+      dispatch({ type: "REDO" })
+    }
+  }, [future.length])
 
   const applyPreset = useCallback(
     (preset: any) => {
-      dispatch({
-        type: "UPDATE",
-        payload: {
-          ...current,
-          ...preset,
-        },
+      setIsLoading(true)
+      // Use requestAnimationFrame for smooth UI updates
+      requestAnimationFrame(() => {
+        dispatch({
+          type: "UPDATE",
+          payload: {
+            ...current,
+            ...preset,
+          },
+        })
+        setIsLoading(false)
       })
     },
     [current],
   )
+
+  // Memoize expensive computations
+  const canUndo = useMemo(() => past.length > 0, [past.length])
+  const canRedo = useMemo(() => future.length > 0, [future.length])
+
+  // Keyboard shortcuts for better UX
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault()
+        handleUndo()
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+        e.preventDefault()
+        handleRedo()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [handleUndo, handleRedo])
+
+  // Performance monitoring
+  useEffect(() => {
+    const startTime = performance.now()
+    return () => {
+      const endTime = performance.now()
+      if (endTime - startTime > 100) {
+        console.warn(`Slow render detected: ${endTime - startTime}ms`)
+      }
+    }
+  })
 
   return (
     <main className="min-h-screen p-4 md:p-8 bg-gray-50">
@@ -84,13 +184,15 @@ export default function Home() {
                     variant="outline"
                     size="icon"
                     onClick={handleUndo}
-                    disabled={past.length === 0}
-                    className="rounded-full"
+                    disabled={!canUndo || isLoading}
+                    className="rounded-full transition-all duration-200 hover:scale-105"
                   >
                     <Undo2 className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Undo</TooltipContent>
+                <TooltipContent>
+                  <p>Undo (Ctrl+Z)</p>
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
 
@@ -101,13 +203,15 @@ export default function Home() {
                     variant="outline"
                     size="icon"
                     onClick={handleRedo}
-                    disabled={future.length === 0}
-                    className="rounded-full"
+                    disabled={!canRedo || isLoading}
+                    className="rounded-full transition-all duration-200 hover:scale-105"
                   >
                     <Redo2 className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Redo</TooltipContent>
+                <TooltipContent>
+                  <p>Redo (Ctrl+Y)</p>
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
 
@@ -121,10 +225,10 @@ export default function Home() {
 
         <Tabs defaultValue="customize" className="w-full">
           <TabsList className="mb-6 rounded-full">
-            <TabsTrigger value="customize" className="rounded-full">
+            <TabsTrigger value="customize" className="rounded-full transition-all duration-200">
               Customize Logo
             </TabsTrigger>
-            <TabsTrigger value="ai" className="rounded-full">
+            <TabsTrigger value="ai" className="rounded-full transition-all duration-200">
               AI Generator
             </TabsTrigger>
           </TabsList>
@@ -132,16 +236,18 @@ export default function Home() {
           <TabsContent value="customize">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-6 md:max-h-[calc(100vh-180px)] md:overflow-y-auto pr-2">
-                <Card className="p-4">
+                <Card className="p-4 transition-all duration-200 hover:shadow-md">
                   <h2 className="text-lg font-medium mb-4">Presets</h2>
                   <PresetSelector onSelectPreset={applyPreset} />
                 </Card>
 
-                <Card className="p-4">
+                <Card className="p-4 transition-all duration-200 hover:shadow-md">
                   <div className="flex border-b mb-4">
                     <button
-                      className={`px-4 py-2 ${
-                        activeTab === "icon" ? "border-b-2 border-primary font-medium" : "text-gray-500"
+                      className={`px-4 py-2 transition-all duration-200 ${
+                        activeTab === "icon"
+                          ? "border-b-2 border-primary font-medium text-primary"
+                          : "text-gray-500 hover:text-gray-700"
                       }`}
                       onClick={() => setActiveTab("icon")}
                     >
@@ -149,8 +255,10 @@ export default function Home() {
                       Icon
                     </button>
                     <button
-                      className={`px-4 py-2 ${
-                        activeTab === "text" ? "border-b-2 border-primary font-medium" : "text-gray-500"
+                      className={`px-4 py-2 transition-all duration-200 ${
+                        activeTab === "text"
+                          ? "border-b-2 border-primary font-medium text-primary"
+                          : "text-gray-500 hover:text-gray-700"
                       }`}
                       onClick={() => setActiveTab("text")}
                     >
@@ -158,12 +266,14 @@ export default function Home() {
                       Text
                     </button>
                     <button
-                      className={`px-4 py-2 ${
-                        activeTab === "background" ? "border-b-2 border-primary font-medium" : "text-gray-500"
+                      className={`px-4 py-2 transition-all duration-200 ${
+                        activeTab === "background"
+                          ? "border-b-2 border-primary font-medium text-primary"
+                          : "text-gray-500 hover:text-gray-700"
                       }`}
                       onClick={() => setActiveTab("background")}
                     >
-                      <div className="h-4 w-4 bg-gray-300 rounded inline-block mr-2" />
+                      <div className="h-4 w-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded inline-block mr-2" />
                       Background
                     </button>
                   </div>
@@ -176,14 +286,14 @@ export default function Home() {
                           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                           <Input
                             placeholder="Search icons..."
-                            className="pl-8"
+                            className="pl-8 rounded-full transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                           />
                         </div>
                         <ScrollArea className="h-48">
                           <IconSelector
-                            searchTerm={searchTerm}
+                            searchTerm={debouncedSearchTerm}
                             selectedIcon={current.iconName}
                             onSelectIcon={(icon) => handleChange("iconName", icon)}
                           />
@@ -196,7 +306,7 @@ export default function Home() {
                           <div>
                             <div className="flex justify-between mb-1">
                               <label className="text-sm">Size</label>
-                              <span className="text-sm">{current.iconSize}%</span>
+                              <span className="text-sm font-medium">{current.iconSize}%</span>
                             </div>
                             <Slider
                               value={[current.iconSize]}
@@ -211,7 +321,7 @@ export default function Home() {
                           <div>
                             <div className="flex justify-between mb-1">
                               <label className="text-sm">Rotation</label>
-                              <span className="text-sm">{current.iconRotation}°</span>
+                              <span className="text-sm font-medium">{current.iconRotation}°</span>
                             </div>
                             <Slider
                               value={[current.iconRotation]}
@@ -235,7 +345,7 @@ export default function Home() {
                           <div>
                             <div className="flex justify-between mb-1">
                               <label className="text-sm">Fill Opacity</label>
-                              <span className="text-sm">{current.iconFillOpacity}%</span>
+                              <span className="text-sm font-medium">{current.iconFillOpacity}%</span>
                             </div>
                             <Slider
                               value={[current.iconFillOpacity]}
@@ -303,7 +413,7 @@ export default function Home() {
                         <div>
                           <div className="flex justify-between mb-1">
                             <label className="text-sm">Border Radius</label>
-                            <span className="text-sm">{current.borderRadius}%</span>
+                            <span className="text-sm font-medium">{current.borderRadius}%</span>
                           </div>
                           <Slider
                             value={[current.borderRadius]}
@@ -318,7 +428,7 @@ export default function Home() {
                         <div>
                           <div className="flex justify-between mb-1">
                             <label className="text-sm">Padding</label>
-                            <span className="text-sm">{current.padding}%</span>
+                            <span className="text-sm font-medium">{current.padding}%</span>
                           </div>
                           <Slider
                             value={[current.padding]}
@@ -333,7 +443,7 @@ export default function Home() {
                         <div>
                           <label className="block text-sm mb-1">Shadow</label>
                           <Select value={current.shadow} onValueChange={(value) => handleChange("shadow", value)}>
-                            <SelectTrigger>
+                            <SelectTrigger className="rounded-full">
                               <SelectValue placeholder="Select shadow style" />
                             </SelectTrigger>
                             <SelectContent>
@@ -349,7 +459,7 @@ export default function Home() {
                         <div>
                           <div className="flex justify-between mb-1">
                             <label className="text-sm">Border Width</label>
-                            <span className="text-sm">{current.borderWidth}px</span>
+                            <span className="text-sm font-medium">{current.borderWidth}px</span>
                           </div>
                           <Slider
                             value={[current.borderWidth]}
@@ -376,7 +486,13 @@ export default function Home() {
               </div>
 
               <div className="md:col-span-2 flex flex-col items-center justify-center">
-                <LogoPreview settings={current} />
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-96">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <LogoPreview settings={current} />
+                )}
               </div>
             </div>
           </TabsContent>

@@ -15,21 +15,43 @@ const validateElement = (elementId: string) => {
   return { element, rect }
 }
 
-// Helper function to convert CSS color to hex
+// Helper function to convert CSS color to hex with better error handling
 const cssColorToHex = (cssColor: string): string => {
-  if (!cssColor || cssColor === "transparent") return "#ffffff"
-  if (cssColor.startsWith("#")) return cssColor
+  if (!cssColor || cssColor === "transparent" || cssColor === "rgba(0, 0, 0, 0)") {
+    return "#ffffff"
+  }
 
-  // Create a temporary element to get computed color
-  const div = document.createElement("div")
-  div.style.color = cssColor
-  document.body.appendChild(div)
+  if (cssColor.startsWith("#")) {
+    // Validate hex format
+    const hex = cssColor.slice(1)
+    if (/^[0-9A-Fa-f]{3}$|^[0-9A-Fa-f]{6}$/.test(hex)) {
+      // Convert 3-digit to 6-digit hex
+      if (hex.length === 3) {
+        return `#${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`
+      }
+      return cssColor
+    }
+  }
 
+  // Handle rgb/rgba values
+  const rgbMatch = cssColor.match(/rgba?$$(\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?$$/)
+  if (rgbMatch) {
+    const r = Number.parseInt(rgbMatch[1]).toString(16).padStart(2, "0")
+    const g = Number.parseInt(rgbMatch[2]).toString(16).padStart(2, "0")
+    const b = Number.parseInt(rgbMatch[3]).toString(16).padStart(2, "0")
+    return `#${r}${g}${b}`
+  }
+
+  // Fallback: create temporary element to compute color
   try {
+    const div = document.createElement("div")
+    div.style.color = cssColor
+    div.style.display = "none"
+    document.body.appendChild(div)
+
     const computedColor = window.getComputedStyle(div).color
     document.body.removeChild(div)
 
-    // Parse rgb/rgba values
     const match = computedColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
     if (match) {
       const r = Number.parseInt(match[1]).toString(16).padStart(2, "0")
@@ -38,40 +60,46 @@ const cssColorToHex = (cssColor: string): string => {
       return `#${r}${g}${b}`
     }
   } catch (error) {
-    document.body.removeChild(div)
+    console.warn("Failed to convert color:", cssColor, error)
   }
 
-  return cssColor
+  return "#ffffff" // Safe fallback
 }
 
-// Helper function to get current background from element
+// Enhanced function to get current background from element with real-time detection
 const getCurrentBackground = (element: HTMLElement) => {
   const styles = window.getComputedStyle(element)
 
-  // Check if it's a gradient
-  if (styles.background && styles.background.includes("linear-gradient")) {
+  // Force style recalculation to get latest values
+  element.offsetHeight // Trigger reflow
+
+  // Check background-image first (gradients are stored here)
+  const backgroundImage = styles.backgroundImage
+  if (backgroundImage && backgroundImage !== "none" && backgroundImage.includes("linear-gradient")) {
     return {
       type: "gradient",
-      value: styles.background,
+      value: backgroundImage,
     }
   }
 
-  // Check background-image for gradients
-  if (styles.backgroundImage && styles.backgroundImage.includes("linear-gradient")) {
+  // Check background shorthand property
+  const background = styles.background
+  if (background && background.includes("linear-gradient")) {
     return {
       type: "gradient",
-      value: styles.backgroundImage,
+      value: background,
     }
   }
 
-  // Solid color
+  // Get background color
+  const backgroundColor = styles.backgroundColor
   return {
     type: "solid",
-    value: styles.backgroundColor || "#ffffff",
+    value: backgroundColor || "#ffffff",
   }
 }
 
-// Helper function to parse gradient colors with better error handling
+// Enhanced gradient parsing with better error handling
 const parseGradientColors = (backgroundStyle: string): { colors: string[]; angle: number } => {
   const defaultResult = { colors: ["#3b82f6", "#60a5fa"], angle: 135 }
 
@@ -80,26 +108,56 @@ const parseGradientColors = (backgroundStyle: string): { colors: string[]; angle
   }
 
   try {
-    // Extract angle
+    // Extract angle with multiple pattern support
     let angle = 135
-    const angleMatch = backgroundStyle.match(/linear-gradient\s*\(\s*(\d+)deg/)
-    if (angleMatch) {
-      angle = Number.parseInt(angleMatch[1])
+    const anglePatterns = [
+      /linear-gradient\s*\(\s*(\d+)deg/,
+      /linear-gradient\s*\(\s*(\d+\.?\d*)deg/,
+      /linear-gradient\s*\(\s*to\s+(\w+)/,
+    ]
+
+    for (const pattern of anglePatterns) {
+      const match = backgroundStyle.match(pattern)
+      if (match) {
+        if (match[1] && !isNaN(Number(match[1]))) {
+          angle = Number(match[1])
+          break
+        } else if (match[1]) {
+          // Handle directional keywords
+          const directions: Record<string, number> = {
+            right: 90,
+            bottom: 180,
+            left: 270,
+            top: 0,
+          }
+          angle = directions[match[1]] || 135
+          break
+        }
+      }
     }
 
-    // Extract colors - improved regex for better color matching
-    const colorMatches = backgroundStyle.match(
-      /(#[0-9a-fA-F]{3,6}|rgb$$[^)]+$$|rgba$$[^)]+$$|hsl$$[^)]+$$|hsla$$[^)]+$$)/g,
-    )
+    // Enhanced color extraction with multiple formats
+    const colorPatterns = [/#[0-9a-fA-F]{3,8}/g, /rgb$$[^)]+$$/g, /rgba$$[^)]+$$/g, /hsl$$[^)]+$$/g, /hsla$$[^)]+$$/g]
 
-    if (colorMatches && colorMatches.length >= 2) {
-      const colors = colorMatches
+    let allColors: string[] = []
+    for (const pattern of colorPatterns) {
+      const matches = backgroundStyle.match(pattern)
+      if (matches) {
+        allColors = allColors.concat(matches)
+      }
+    }
+
+    if (allColors.length >= 2) {
+      const colors = allColors
         .slice(0, 2)
         .map((color) => cssColorToHex(color))
-        .filter((color) => color !== "#ffffff" || colorMatches.length === 1)
+        .filter((color) => color && color !== "#ffffff")
 
       if (colors.length >= 2) {
         return { colors, angle }
+      } else if (colors.length === 1) {
+        // If only one color found, create a subtle gradient
+        return { colors: [colors[0], colors[0]], angle }
       }
     }
   } catch (error) {
@@ -109,14 +167,20 @@ const parseGradientColors = (backgroundStyle: string): { colors: string[]; angle
   return defaultResult
 }
 
+// Enhanced SVG export with better background detection
 export const downloadSVG = (elementId: string, fileName: string): boolean => {
   try {
     const { element, rect } = validateElement(elementId)
 
-    // Get current background
+    // Force style recalculation
+    element.offsetHeight
+
+    // Get current background with real-time detection
     const background = getCurrentBackground(element)
     const width = Math.round(rect.width)
     const height = Math.round(rect.height)
+
+    console.log("SVG Export - Current background:", background)
 
     if (width <= 0 || height <= 0) {
       throw new Error("Invalid element dimensions")
@@ -142,10 +206,11 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
     // Handle background (gradient or solid)
     if (background.type === "gradient") {
       const { colors, angle } = parseGradientColors(background.value)
+      console.log("SVG Export - Parsed gradient:", { colors, angle })
 
       // Create linear gradient
       const gradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient")
-      const gradientId = "logoGradient"
+      const gradientId = `logoGradient_${Date.now()}`
       gradient.setAttribute("id", gradientId)
 
       // Convert angle to SVG coordinates
@@ -172,10 +237,11 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
       backgroundRect.setAttribute("fill", `url(#${gradientId})`)
     } else {
       const bgColor = cssColorToHex(background.value)
+      console.log("SVG Export - Solid background:", bgColor)
       backgroundRect.setAttribute("fill", bgColor)
     }
 
-    // Add border radius
+    // Add border radius and other styles
     const styles = window.getComputedStyle(element)
     const borderRadius = styles.borderRadius
     if (borderRadius && borderRadius !== "0px") {
@@ -195,18 +261,15 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
 
     svg.appendChild(backgroundRect)
 
-    // Find and process the icon
+    // Add icon and text (existing logic)
     const iconElement = element.querySelector("svg")
     if (iconElement) {
       const iconRect = iconElement.getBoundingClientRect()
       const iconStyles = window.getComputedStyle(iconElement)
-
-      // Calculate icon position relative to the container
       const containerRect = element.getBoundingClientRect()
       const iconX = iconRect.left - containerRect.left
       const iconY = iconRect.top - containerRect.top
 
-      // Create group for the icon
       const iconGroup = document.createElementNS("http://www.w3.org/2000/svg", "g")
 
       // Apply rotation if present
@@ -226,20 +289,15 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
       const paths = iconElement.querySelectorAll("path")
       paths.forEach((path) => {
         const newPath = document.createElementNS("http://www.w3.org/2000/svg", "path")
-
-        // Copy path data
         const pathData = path.getAttribute("d")
         if (pathData) {
           newPath.setAttribute("d", pathData)
-
-          // Set colors based on computed styles
           const strokeColor = cssColorToHex(iconStyles.color)
           newPath.setAttribute("stroke", strokeColor)
           newPath.setAttribute("stroke-width", path.getAttribute("stroke-width") || "2")
           newPath.setAttribute("stroke-linecap", "round")
           newPath.setAttribute("stroke-linejoin", "round")
 
-          // Handle fill
           const fillOpacity = Number.parseFloat(iconStyles.fillOpacity || "0")
           if (fillOpacity > 0) {
             newPath.setAttribute("fill", cssColorToHex(iconStyles.fill || strokeColor))
@@ -252,12 +310,7 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
         }
       })
 
-      // Set the viewBox and position for the icon group
-      const viewBox = iconElement.getAttribute("viewBox") || "0 0 24 24"
-      iconGroup.setAttribute("viewBox", viewBox)
-
-      // Scale and position the icon
-      const scaleX = iconRect.width / 24 // Assuming 24x24 viewBox
+      const scaleX = iconRect.width / 24
       const scaleY = iconRect.height / 24
       const transform = iconGroup.getAttribute("transform") || ""
       iconGroup.setAttribute(
@@ -290,14 +343,11 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
       textSvg.setAttribute("letter-spacing", textStyles.letterSpacing)
       textSvg.setAttribute("fill", cssColorToHex(textStyles.color))
 
-      // Add text shadow if present
       if (textStyles.textShadow && textStyles.textShadow !== "none") {
-        const filterId = "textShadow"
+        const filterId = `textShadow_${Date.now()}`
         const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter")
         filter.setAttribute("id", filterId)
-        filter.innerHTML = `
-          <feDropShadow dx="0" dy="0" stdDeviation="2" flood-opacity="0.5" flood-color="black"/>
-        `
+        filter.innerHTML = `<feDropShadow dx="0" dy="0" stdDeviation="2" flood-opacity="0.5" flood-color="black"/>`
         defs.appendChild(filter)
         textSvg.setAttribute("filter", `url(#${filterId})`)
       }
@@ -322,17 +372,21 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
 
-    console.log("SVG export successful")
+    console.log("✅ SVG export successful")
     return true
   } catch (error) {
-    console.error("Error downloading SVG:", error)
+    console.error("❌ Error downloading SVG:", error)
     throw error
   }
 }
 
+// Enhanced PNG export with real-time background detection
 export const downloadPNG = async (elementId: string, fileName: string, width = 0, height = 0): Promise<boolean> => {
   try {
     const { element, rect } = validateElement(elementId)
+
+    // Force style recalculation
+    element.offsetHeight
 
     const canvas = document.createElement("canvas")
     const scale = 2 // Higher DPI for better quality
@@ -359,12 +413,14 @@ export const downloadPNG = async (elementId: string, fileName: string, width = 0
     // Clear canvas with transparency
     ctx.clearRect(0, 0, targetWidth, targetHeight)
 
-    // Get current background
+    // Get current background with real-time detection
     const background = getCurrentBackground(element)
+    console.log("PNG Export - Current background:", background)
 
     // Draw background
     if (background.type === "gradient") {
       const { colors, angle } = parseGradientColors(background.value)
+      console.log("PNG Export - Parsed gradient:", { colors, angle })
 
       const angleRad = ((angle - 90) * Math.PI) / 180
       const centerX = targetWidth / 2
@@ -382,10 +438,10 @@ export const downloadPNG = async (elementId: string, fileName: string, width = 0
       ctx.fillStyle = gradient
     } else {
       const bgColor = background.value
+      console.log("PNG Export - Solid background:", bgColor)
       if (bgColor && bgColor !== "transparent" && bgColor !== "rgba(0, 0, 0, 0)") {
         ctx.fillStyle = bgColor
       } else {
-        // Skip background for transparent
         ctx.fillStyle = "transparent"
       }
     }
@@ -396,7 +452,6 @@ export const downloadPNG = async (elementId: string, fileName: string, width = 0
       const borderRadius = Number.parseInt(styles.borderRadius) || 0
       ctx.beginPath()
       if (borderRadius > 0) {
-        // Use roundRect if available, fallback to manual drawing
         if (ctx.roundRect) {
           ctx.roundRect(0, 0, targetWidth, targetHeight, borderRadius)
         } else {
@@ -496,14 +551,15 @@ export const downloadPNG = async (elementId: string, fileName: string, width = 0
     link.click()
     document.body.removeChild(link)
 
-    console.log("PNG export successful")
+    console.log("✅ PNG export successful")
     return true
   } catch (error) {
-    console.error("Error downloading PNG:", error)
+    console.error("❌ Error downloading PNG:", error)
     throw error
   }
 }
 
+// Enhanced JPEG export with real-time background detection
 export const downloadJPEG = async (
   elementId: string,
   fileName: string,
@@ -514,6 +570,9 @@ export const downloadJPEG = async (
 ): Promise<boolean> => {
   try {
     const { element, rect } = validateElement(elementId)
+
+    // Force style recalculation
+    element.offsetHeight
 
     const canvas = document.createElement("canvas")
     const scale = 2
@@ -541,9 +600,11 @@ export const downloadJPEG = async (
 
     // Get current background and draw it
     const background = getCurrentBackground(element)
+    console.log("JPEG Export - Current background:", background)
 
     if (background.type === "gradient") {
       const { colors, angle } = parseGradientColors(background.value)
+      console.log("JPEG Export - Parsed gradient:", { colors, angle })
 
       const angleRad = ((angle - 90) * Math.PI) / 180
       const centerX = targetWidth / 2
@@ -561,6 +622,7 @@ export const downloadJPEG = async (
       ctx.fillStyle = gradient
     } else {
       ctx.fillStyle = background.value || backgroundColor
+      console.log("JPEG Export - Solid background:", ctx.fillStyle)
     }
 
     const styles = window.getComputedStyle(element)
@@ -586,7 +648,7 @@ export const downloadJPEG = async (
     }
     ctx.fill()
 
-    // Add icon and text (same as PNG)
+    // Add icon and text (same logic as PNG)
     const iconElement = element.querySelector("svg")
     if (iconElement) {
       try {
@@ -648,14 +710,15 @@ export const downloadJPEG = async (
     link.click()
     document.body.removeChild(link)
 
-    console.log("JPEG export successful")
+    console.log("✅ JPEG export successful")
     return true
   } catch (error) {
-    console.error("Error downloading JPEG:", error)
+    console.error("❌ Error downloading JPEG:", error)
     throw error
   }
 }
 
+// Enhanced PDF export with real-time background detection
 export const downloadPDF = async (
   elementId: string,
   fileName: string,
@@ -666,6 +729,9 @@ export const downloadPDF = async (
 ): Promise<boolean> => {
   try {
     const { element, rect } = validateElement(elementId)
+
+    // Force style recalculation
+    element.offsetHeight
 
     const canvas = document.createElement("canvas")
 
@@ -688,9 +754,11 @@ export const downloadPDF = async (
 
     // Get current background and draw it
     const background = getCurrentBackground(element)
+    console.log("PDF Export - Current background:", background)
 
     if (background.type === "gradient") {
       const { colors, angle } = parseGradientColors(background.value)
+      console.log("PDF Export - Parsed gradient:", { colors, angle })
 
       const angleRad = ((angle - 90) * Math.PI) / 180
       const centerX = targetWidth / 2
@@ -708,6 +776,7 @@ export const downloadPDF = async (
       ctx.fillStyle = gradient
     } else {
       ctx.fillStyle = background.value || "#ffffff"
+      console.log("PDF Export - Solid background:", ctx.fillStyle)
     }
 
     const styles = window.getComputedStyle(element)
@@ -733,7 +802,7 @@ export const downloadPDF = async (
     }
     ctx.fill()
 
-    // Add icon and text
+    // Add icon and text (same logic as other formats)
     const iconElement = element.querySelector("svg")
     if (iconElement) {
       try {
@@ -815,10 +884,10 @@ export const downloadPDF = async (
     pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight)
     pdf.save(`${fileName || "logo"}.pdf`)
 
-    console.log("PDF export successful")
+    console.log("✅ PDF export successful")
     return true
   } catch (error) {
-    console.error("Error downloading PDF:", error)
+    console.error("❌ Error downloading PDF:", error)
     throw error
   }
 }
