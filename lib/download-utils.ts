@@ -44,6 +44,33 @@ const cssColorToHex = (cssColor: string): string => {
   return cssColor
 }
 
+// Helper function to get current background from element
+const getCurrentBackground = (element: HTMLElement) => {
+  const styles = window.getComputedStyle(element)
+
+  // Check if it's a gradient
+  if (styles.background && styles.background.includes("linear-gradient")) {
+    return {
+      type: "gradient",
+      value: styles.background,
+    }
+  }
+
+  // Check background-image for gradients
+  if (styles.backgroundImage && styles.backgroundImage.includes("linear-gradient")) {
+    return {
+      type: "gradient",
+      value: styles.backgroundImage,
+    }
+  }
+
+  // Solid color
+  return {
+    type: "solid",
+    value: styles.backgroundColor || "#ffffff",
+  }
+}
+
 // Helper function to parse gradient colors with better error handling
 const parseGradientColors = (backgroundStyle: string): { colors: string[]; angle: number } => {
   const defaultResult = { colors: ["#3b82f6", "#60a5fa"], angle: 135 }
@@ -86,8 +113,8 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
   try {
     const { element, rect } = validateElement(elementId)
 
-    // Get computed styles and dimensions
-    const styles = window.getComputedStyle(element)
+    // Get current background
+    const background = getCurrentBackground(element)
     const width = Math.round(rect.width)
     const height = Math.round(rect.height)
 
@@ -113,8 +140,8 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
     backgroundRect.setAttribute("height", "100%")
 
     // Handle background (gradient or solid)
-    if (styles.background && styles.background.includes("linear-gradient")) {
-      const { colors, angle } = parseGradientColors(styles.background)
+    if (background.type === "gradient") {
+      const { colors, angle } = parseGradientColors(background.value)
 
       // Create linear gradient
       const gradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient")
@@ -144,11 +171,12 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
       defs.appendChild(gradient)
       backgroundRect.setAttribute("fill", `url(#${gradientId})`)
     } else {
-      const bgColor = cssColorToHex(styles.backgroundColor)
+      const bgColor = cssColorToHex(background.value)
       backgroundRect.setAttribute("fill", bgColor)
     }
 
     // Add border radius
+    const styles = window.getComputedStyle(element)
     const borderRadius = styles.borderRadius
     if (borderRadius && borderRadius !== "0px") {
       const radiusValue = Number.parseInt(borderRadius)
@@ -331,12 +359,12 @@ export const downloadPNG = async (elementId: string, fileName: string, width = 0
     // Clear canvas with transparency
     ctx.clearRect(0, 0, targetWidth, targetHeight)
 
-    // Draw using the same logic as SVG but on canvas
-    const styles = window.getComputedStyle(element)
+    // Get current background
+    const background = getCurrentBackground(element)
 
     // Draw background
-    if (styles.background && styles.background.includes("linear-gradient")) {
-      const { colors, angle } = parseGradientColors(styles.background)
+    if (background.type === "gradient") {
+      const { colors, angle } = parseGradientColors(background.value)
 
       const angleRad = ((angle - 90) * Math.PI) / 180
       const centerX = targetWidth / 2
@@ -353,7 +381,7 @@ export const downloadPNG = async (elementId: string, fileName: string, width = 0
       gradient.addColorStop(1, colors[1])
       ctx.fillStyle = gradient
     } else {
-      const bgColor = styles.backgroundColor
+      const bgColor = background.value
       if (bgColor && bgColor !== "transparent" && bgColor !== "rgba(0, 0, 0, 0)") {
         ctx.fillStyle = bgColor
       } else {
@@ -364,6 +392,7 @@ export const downloadPNG = async (elementId: string, fileName: string, width = 0
 
     // Draw rounded rectangle if we have a background
     if (ctx.fillStyle !== "transparent") {
+      const styles = window.getComputedStyle(element)
       const borderRadius = Number.parseInt(styles.borderRadius) || 0
       ctx.beginPath()
       if (borderRadius > 0) {
@@ -510,11 +539,11 @@ export const downloadJPEG = async (
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, targetWidth, targetHeight)
 
-    // Then draw the logo on top (same as PNG logic)
-    const styles = window.getComputedStyle(element)
+    // Get current background and draw it
+    const background = getCurrentBackground(element)
 
-    if (styles.background && styles.background.includes("linear-gradient")) {
-      const { colors, angle } = parseGradientColors(styles.background)
+    if (background.type === "gradient") {
+      const { colors, angle } = parseGradientColors(background.value)
 
       const angleRad = ((angle - 90) * Math.PI) / 180
       const centerX = targetWidth / 2
@@ -531,9 +560,10 @@ export const downloadJPEG = async (
       gradient.addColorStop(1, colors[1])
       ctx.fillStyle = gradient
     } else {
-      ctx.fillStyle = styles.backgroundColor || backgroundColor
+      ctx.fillStyle = background.value || backgroundColor
     }
 
+    const styles = window.getComputedStyle(element)
     const borderRadius = Number.parseInt(styles.borderRadius) || 0
     ctx.beginPath()
     if (borderRadius > 0) {
@@ -656,11 +686,11 @@ export const downloadPDF = async (
 
     ctx.scale(2, 2)
 
-    // Draw logo (same logic as PNG)
-    const styles = window.getComputedStyle(element)
+    // Get current background and draw it
+    const background = getCurrentBackground(element)
 
-    if (styles.background && styles.background.includes("linear-gradient")) {
-      const { colors, angle } = parseGradientColors(styles.background)
+    if (background.type === "gradient") {
+      const { colors, angle } = parseGradientColors(background.value)
 
       const angleRad = ((angle - 90) * Math.PI) / 180
       const centerX = targetWidth / 2
@@ -677,9 +707,10 @@ export const downloadPDF = async (
       gradient.addColorStop(1, colors[1])
       ctx.fillStyle = gradient
     } else {
-      ctx.fillStyle = styles.backgroundColor || "#ffffff"
+      ctx.fillStyle = background.value || "#ffffff"
     }
 
+    const styles = window.getComputedStyle(element)
     const borderRadius = Number.parseInt(styles.borderRadius) || 0
     ctx.beginPath()
     if (borderRadius > 0) {

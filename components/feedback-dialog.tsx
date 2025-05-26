@@ -8,26 +8,30 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { MessageSquare, Send, Loader2, CheckCircle } from "lucide-react"
+import { MessageSquare, Send, Loader2, CheckCircle, AlertCircle } from "lucide-react"
 
 export default function FeedbackDialog() {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState("")
   const [email, setEmail] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
 
     if (!feedback.trim()) {
-      alert("Please provide your feedback before submitting.")
+      setError("Please provide your feedback before submitting.")
       return
     }
 
     setLoading(true)
 
     try {
+      console.log("Submitting feedback:", { feedback: feedback.trim(), email: email.trim() })
+
       const response = await fetch("/api/feedback", {
         method: "POST",
         headers: {
@@ -41,22 +45,29 @@ export default function FeedbackDialog() {
         }),
       })
 
+      const data = await response.json()
+      console.log("Feedback response:", data)
+
       if (!response.ok) {
-        throw new Error("Failed to submit feedback")
+        throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to submit feedback")
       }
 
       setSubmitted(true)
       setFeedback("")
       setEmail("")
 
-      // Auto-close after 2 seconds
+      // Auto-close after 3 seconds
       setTimeout(() => {
         setOpen(false)
         setSubmitted(false)
-      }, 2000)
+      }, 3000)
     } catch (error) {
       console.error("Error submitting feedback:", error)
-      alert("Failed to submit feedback. Please try again.")
+      setError(error instanceof Error ? error.message : "Failed to submit feedback. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -65,6 +76,7 @@ export default function FeedbackDialog() {
   const handleClose = () => {
     setOpen(false)
     setSubmitted(false)
+    setError(null)
     setFeedback("")
     setEmail("")
   }
@@ -95,9 +107,17 @@ export default function FeedbackDialog() {
             <p className="text-muted-foreground">
               Your feedback has been submitted successfully. We appreciate your input!
             </p>
+            <p className="text-xs text-muted-foreground mt-2">This dialog will close automatically in a few seconds.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+            {error && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="feedback" className="text-sm font-medium">
                 Your Feedback <span className="text-red-500">*</span>

@@ -9,9 +9,9 @@ export async function POST(req: Request) {
     }
 
     // Validate email if provided
-    if (email && typeof email === "string") {
+    if (email && typeof email === "string" && email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(email)) {
+      if (!emailRegex.test(email.trim())) {
         return Response.json({ success: false, error: "Invalid email format" }, { status: 400 })
       }
     }
@@ -24,21 +24,21 @@ export async function POST(req: Request) {
       timestamp: timestamp || new Date().toISOString(),
       userAgent: userAgent || null,
       ip: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown",
+      processed: true,
     }
 
-    // In a real application, you would save this to a database
-    // For now, we'll log it to the console (in production, use a proper logging service)
-    console.log("New feedback received:", {
-      id: feedbackEntry.id,
-      feedback: feedbackEntry.feedback,
-      email: feedbackEntry.email,
-      timestamp: feedbackEntry.timestamp,
-    })
+    // Log feedback to console (in production, save to database)
+    console.log("=== NEW FEEDBACK RECEIVED ===")
+    console.log("ID:", feedbackEntry.id)
+    console.log("Feedback:", feedbackEntry.feedback)
+    console.log("Email:", feedbackEntry.email || "Not provided")
+    console.log("Timestamp:", feedbackEntry.timestamp)
+    console.log("User Agent:", feedbackEntry.userAgent)
+    console.log("IP:", feedbackEntry.ip)
+    console.log("=============================")
 
-    // You could also save to a file, send to an external service, etc.
-    // Example: await saveToDatabase(feedbackEntry)
-    // Example: await sendToSlack(feedbackEntry)
-    // Example: await sendEmail(feedbackEntry)
+    // Simulate processing delay (remove in production)
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
     return Response.json({
       success: true,
@@ -47,6 +47,12 @@ export async function POST(req: Request) {
     })
   } catch (error) {
     console.error("Error processing feedback:", error)
-    return Response.json({ success: false, error: "Internal server error" }, { status: 500 })
+    return Response.json(
+      {
+        success: false,
+        error: "Failed to process feedback. Please try again.",
+      },
+      { status: 500 },
+    )
   }
 }
