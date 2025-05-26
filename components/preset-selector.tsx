@@ -34,8 +34,8 @@ const presets = [
     iconColor: "#ffffff",
     iconFillOpacity: 0,
     iconFillColor: "#ffffff",
-    backgroundColor: "#ff5f6d",
-    gradientColor: "#ffc371",
+    backgroundColor: "#ff5f6d", // Vibrant pink-red
+    gradientColor: "#ffc371", // Vibrant orange-yellow
     useGradient: true,
     borderRadius: 25,
     padding: 15,

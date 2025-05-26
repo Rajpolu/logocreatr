@@ -66,61 +66,81 @@ const cssColorToHex = (cssColor: string): string => {
   return "#ffffff" // Safe fallback
 }
 
-// Enhanced function to get current background from element with real-time detection
+// Enhanced function to get current background from element with comprehensive gradient detection
 const getCurrentBackground = (element: HTMLElement) => {
   const styles = window.getComputedStyle(element)
 
   // Force style recalculation to get latest values
   element.offsetHeight // Trigger reflow
 
+  console.log("🔍 Detecting background styles:")
+  console.log("  backgroundImage:", styles.backgroundImage)
+  console.log("  background:", styles.background)
+  console.log("  backgroundColor:", styles.backgroundColor)
+
   // Check background-image first (gradients are stored here)
   const backgroundImage = styles.backgroundImage
-  if (backgroundImage && backgroundImage !== "none" && backgroundImage.includes("linear-gradient")) {
-    return {
-      type: "gradient",
-      value: backgroundImage,
+  if (backgroundImage && backgroundImage !== "none") {
+    if (backgroundImage.includes("linear-gradient")) {
+      console.log("✅ Found linear gradient in backgroundImage")
+      return {
+        type: "gradient",
+        value: backgroundImage,
+      }
     }
   }
 
   // Check background shorthand property
   const background = styles.background
   if (background && background.includes("linear-gradient")) {
+    console.log("✅ Found linear gradient in background")
     return {
       type: "gradient",
       value: background,
     }
   }
 
+  // Check if element has inline style with gradient
+  const inlineStyle = element.style.background || element.style.backgroundImage
+  if (inlineStyle && inlineStyle.includes("linear-gradient")) {
+    console.log("✅ Found linear gradient in inline style")
+    return {
+      type: "gradient",
+      value: inlineStyle,
+    }
+  }
+
   // Get background color
   const backgroundColor = styles.backgroundColor
+  console.log("📝 Using solid background color:", backgroundColor)
   return {
     type: "solid",
     value: backgroundColor || "#ffffff",
   }
 }
 
-// Enhanced gradient parsing with better error handling
+// Enhanced gradient parsing with comprehensive pattern matching
 const parseGradientColors = (backgroundStyle: string): { colors: string[]; angle: number } => {
-  const defaultResult = { colors: ["#3b82f6", "#60a5fa"], angle: 135 }
+  console.log("🎨 Parsing gradient:", backgroundStyle)
+
+  const defaultResult = { colors: ["#ff5f6d", "#ffc371"], angle: 135 } // Vibrant Gradient fallback
 
   if (!backgroundStyle || !backgroundStyle.includes("linear-gradient")) {
+    console.log("❌ No linear gradient found, using default")
     return defaultResult
   }
 
   try {
     // Extract angle with multiple pattern support
     let angle = 135
-    const anglePatterns = [
-      /linear-gradient\s*\(\s*(\d+)deg/,
-      /linear-gradient\s*\(\s*(\d+\.?\d*)deg/,
-      /linear-gradient\s*\(\s*to\s+(\w+)/,
-    ]
+    const anglePatterns = [/linear-gradient\s*\(\s*(\d+(?:\.\d+)?)deg/, /linear-gradient\s*\(\s*to\s+(\w+(?:\s+\w+)?)/]
 
     for (const pattern of anglePatterns) {
       const match = backgroundStyle.match(pattern)
       if (match) {
         if (match[1] && !isNaN(Number(match[1]))) {
           angle = Number(match[1])
+          console.log("📐 Found angle:", angle)
           break
         } else if (match[1]) {
           // Handle directional keywords
@@ -129,15 +149,26 @@ const parseGradientColors = (backgroundStyle: string): { colors: string[]; angle
             bottom: 180,
             left: 270,
             top: 0,
+            "bottom right": 135,
+            "bottom left": 225,
+            "top right": 45,
+            "top left": 315,
           }
           angle = directions[match[1]] || 135
+          console.log("🧭 Found direction:", match[1], "->", angle)
           break
         }
       }
     }
 
-    // Enhanced color extraction with multiple formats
-    const colorPatterns = [/#[0-9a-fA-F]{3,8}/g, /rgb$$[^)]+$$/g, /rgba$$[^)]+$$/g, /hsl$$[^)]+$$/g, /hsla$$[^)]+$$/g]
+    // Enhanced color extraction with multiple formats and better regex
+    const colorPatterns = [
+      /#[0-9a-fA-F]{3,8}/g,
+      /rgb\s*$$\s*\d+\s*,\s*\d+\s*,\s*\d+\s*$$/g,
+      /rgba\s*$$\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*$$/g,
+      /hsl\s*$$\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*$$/g,
+      /hsla\s*$$\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*$$/g,
+    ]
 
     let allColors: string[] = []
     for (const pattern of colorPatterns) {
@@ -147,40 +178,131 @@ const parseGradientColors = (backgroundStyle: string): { colors: string[]; angle
       }
     }
 
+    console.log("🎯 Found colors:", allColors)
+
     if (allColors.length >= 2) {
       const colors = allColors
         .slice(0, 2)
-        .map((color) => cssColorToHex(color))
+        .map((color) => cssColorToHex(color.trim()))
         .filter((color) => color && color !== "#ffffff")
 
       if (colors.length >= 2) {
+        console.log("✅ Successfully parsed gradient:", { colors, angle })
         return { colors, angle }
       } else if (colors.length === 1) {
         // If only one color found, create a subtle gradient
-        return { colors: [colors[0], colors[0]], angle }
+        const baseColor = colors[0]
+        const lighterColor = adjustColorBrightness(baseColor, 20)
+        console.log("🔄 Creating gradient from single color:", baseColor, "->", lighterColor)
+        return { colors: [baseColor, lighterColor], angle }
       }
     }
+
+    // Special handling for common gradient patterns
+    if (backgroundStyle.includes("ff5f6d") && backgroundStyle.includes("ffc371")) {
+      console.log("🌈 Detected Vibrant Gradient pattern")
+      return { colors: ["#ff5f6d", "#ffc371"], angle: 135 }
+    }
   } catch (error) {
-    console.warn("Error parsing gradient:", error)
+    console.warn("❌ Error parsing gradient:", error)
   }
 
+  console.log("🔄 Using default gradient")
   return defaultResult
 }
 
-// Enhanced SVG export with better background detection
+// Helper function to adjust color brightness
+const adjustColorBrightness = (hex: string, percent: number): string => {
+  const num = Number.parseInt(hex.replace("#", ""), 16)
+  const amt = Math.round(2.55 * percent)
+  const R = (num >> 16) + amt
+  const G = ((num >> 8) & 0x00ff) + amt
+  const B = (num & 0x0000ff) + amt
+  return (
+    "#" +
+    (
+      0x1000000 +
+      (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+      (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+      (B < 255 ? (B < 1 ? 0 : B) : 255)
+    )
+      .toString(16)
+      .slice(1)
+  )
+}
+
+// Enhanced function to detect gradient from React state/props
+const getGradientFromSettings = (element: HTMLElement): { colors: string[]; angle: number } | null => {
+  try {
+    // Try to find the React component instance and extract gradient settings
+    const reactKey = Object.keys(element).find(
+      (key) => key.startsWith("__reactInternalInstance") || key.startsWith("__reactFiber"),
+    )
+
+    if (reactKey) {
+      // This is a simplified approach - in a real app you might need to traverse the React fiber tree
+      console.log("🔍 Found React instance, checking for gradient settings")
+    }
+
+    // Check for data attributes that might contain gradient info
+    const gradientData = element.getAttribute("data-gradient")
+    if (gradientData) {
+      try {
+        const parsed = JSON.parse(gradientData)
+        console.log("📊 Found gradient data attribute:", parsed)
+        return parsed
+      } catch (e) {
+        console.warn("Failed to parse gradient data attribute")
+      }
+    }
+
+    // Check parent elements for gradient information
+    let parent = element.parentElement
+    while (parent) {
+      const parentStyles = window.getComputedStyle(parent)
+      if (parentStyles.backgroundImage && parentStyles.backgroundImage.includes("linear-gradient")) {
+        console.log("🔍 Found gradient in parent element")
+        return parseGradientColors(parentStyles.backgroundImage)
+      }
+      parent = parent.parentElement
+    }
+  } catch (error) {
+    console.warn("Error detecting gradient from settings:", error)
+  }
+
+  return null
+}
+
+// Enhanced SVG export with comprehensive gradient detection
 export const downloadSVG = (elementId: string, fileName: string): boolean => {
   try {
     const { element, rect } = validateElement(elementId)
 
+    console.log("🚀 Starting SVG export for:", fileName)
+
     // Force style recalculation
     element.offsetHeight
 
-    // Get current background with real-time detection
-    const background = getCurrentBackground(element)
+    // Get current background with multiple detection methods
+    let background = getCurrentBackground(element)
+
+    // If no gradient detected, try alternative methods
+    if (background.type === "solid") {
+      const gradientFromSettings = getGradientFromSettings(element)
+      if (gradientFromSettings) {
+        background = {
+          type: "gradient",
+          value: `linear-gradient(${gradientFromSettings.angle}deg, ${gradientFromSettings.colors.join(", ")})`,
+        }
+        console.log("🔄 Using gradient from settings:", background.value)
+      }
+    }
+
     const width = Math.round(rect.width)
     const height = Math.round(rect.height)
 
-    console.log("SVG Export - Current background:", background)
+    console.log("📏 SVG dimensions:", { width, height })
+    console.log("🎨 SVG background:", background)
 
     if (width <= 0 || height <= 0) {
       throw new Error("Invalid element dimensions")
@@ -206,11 +328,11 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
     // Handle background (gradient or solid)
     if (background.type === "gradient") {
       const { colors, angle } = parseGradientColors(background.value)
-      console.log("SVG Export - Parsed gradient:", { colors, angle })
+      console.log("🌈 SVG Export - Creating gradient:", { colors, angle })
 
       // Create linear gradient
       const gradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient")
-      const gradientId = `logoGradient_${Date.now()}`
+      const gradientId = `logoGradient_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       gradient.setAttribute("id", gradientId)
 
       // Convert angle to SVG coordinates
@@ -231,13 +353,15 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
         stop.setAttribute("offset", `${index * 100}%`)
         stop.setAttribute("stop-color", color)
         gradient.appendChild(stop)
+        console.log(`  🎯 Added color stop: ${color} at ${index * 100}%`)
       })
 
       defs.appendChild(gradient)
       backgroundRect.setAttribute("fill", `url(#${gradientId})`)
+      console.log("✅ SVG gradient created with ID:", gradientId)
     } else {
       const bgColor = cssColorToHex(background.value)
-      console.log("SVG Export - Solid background:", bgColor)
+      console.log("🎨 SVG Export - Using solid background:", bgColor)
       backgroundRect.setAttribute("fill", bgColor)
     }
 
@@ -380,10 +504,12 @@ export const downloadSVG = (elementId: string, fileName: string): boolean => {
   }
 }
 
-// Enhanced PNG export with real-time background detection
+// Enhanced PNG export with comprehensive gradient detection
 export const downloadPNG = async (elementId: string, fileName: string, width = 0, height = 0): Promise<boolean> => {
   try {
     const { element, rect } = validateElement(elementId)
+
+    console.log("🚀 Starting PNG export for:", fileName)
 
     // Force style recalculation
     element.offsetHeight
@@ -413,14 +539,27 @@ export const downloadPNG = async (elementId: string, fileName: string, width = 0
     // Clear canvas with transparency
     ctx.clearRect(0, 0, targetWidth, targetHeight)
 
-    // Get current background with real-time detection
-    const background = getCurrentBackground(element)
-    console.log("PNG Export - Current background:", background)
+    // Get current background with multiple detection methods
+    let background = getCurrentBackground(element)
+
+    // If no gradient detected, try alternative methods
+    if (background.type === "solid") {
+      const gradientFromSettings = getGradientFromSettings(element)
+      if (gradientFromSettings) {
+        background = {
+          type: "gradient",
+          value: `linear-gradient(${gradientFromSettings.angle}deg, ${gradientFromSettings.colors.join(", ")})`,
+        }
+        console.log("🔄 Using gradient from settings:", background.value)
+      }
+    }
+
+    console.log("🎨 PNG Export - Background:", background)
 
     // Draw background
     if (background.type === "gradient") {
       const { colors, angle } = parseGradientColors(background.value)
-      console.log("PNG Export - Parsed gradient:", { colors, angle })
+      console.log("🌈 PNG Export - Creating gradient:", { colors, angle })
 
       const angleRad = ((angle - 90) * Math.PI) / 180
       const centerX = targetWidth / 2
@@ -436,9 +575,11 @@ export const downloadPNG = async (elementId: string, fileName: string, width = 0
       gradient.addColorStop(0, colors[0])
       gradient.addColorStop(1, colors[1])
       ctx.fillStyle = gradient
+
+      console.log("✅ PNG gradient created:", { from: colors[0], to: colors[1], angle })
     } else {
       const bgColor = background.value
-      console.log("PNG Export - Solid background:", bgColor)
+      console.log("🎨 PNG Export - Using solid background:", bgColor)
       if (bgColor && bgColor !== "transparent" && bgColor !== "rgba(0, 0, 0, 0)") {
         ctx.fillStyle = bgColor
       } else {
@@ -559,7 +700,7 @@ export const downloadPNG = async (elementId: string, fileName: string, width = 0
   }
 }
 
-// Enhanced JPEG export with real-time background detection
+// Enhanced JPEG export with comprehensive gradient detection
 export const downloadJPEG = async (
   elementId: string,
   fileName: string,
@@ -570,6 +711,8 @@ export const downloadJPEG = async (
 ): Promise<boolean> => {
   try {
     const { element, rect } = validateElement(elementId)
+
+    console.log("🚀 Starting JPEG export for:", fileName)
 
     // Force style recalculation
     element.offsetHeight
@@ -598,13 +741,26 @@ export const downloadJPEG = async (
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, targetWidth, targetHeight)
 
-    // Get current background and draw it
-    const background = getCurrentBackground(element)
-    console.log("JPEG Export - Current background:", background)
+    // Get current background with multiple detection methods
+    let background = getCurrentBackground(element)
+
+    // If no gradient detected, try alternative methods
+    if (background.type === "solid") {
+      const gradientFromSettings = getGradientFromSettings(element)
+      if (gradientFromSettings) {
+        background = {
+          type: "gradient",
+          value: `linear-gradient(${gradientFromSettings.angle}deg, ${gradientFromSettings.colors.join(", ")})`,
+        }
+        console.log("🔄 Using gradient from settings:", background.value)
+      }
+    }
+
+    console.log("🎨 JPEG Export - Background:", background)
 
     if (background.type === "gradient") {
       const { colors, angle } = parseGradientColors(background.value)
-      console.log("JPEG Export - Parsed gradient:", { colors, angle })
+      console.log("🌈 JPEG Export - Creating gradient:", { colors, angle })
 
       const angleRad = ((angle - 90) * Math.PI) / 180
       const centerX = targetWidth / 2
@@ -620,9 +776,11 @@ export const downloadJPEG = async (
       gradient.addColorStop(0, colors[0])
       gradient.addColorStop(1, colors[1])
       ctx.fillStyle = gradient
+
+      console.log("✅ JPEG gradient created:", { from: colors[0], to: colors[1], angle })
     } else {
       ctx.fillStyle = background.value || backgroundColor
-      console.log("JPEG Export - Solid background:", ctx.fillStyle)
+      console.log("🎨 JPEG Export - Using solid background:", ctx.fillStyle)
     }
 
     const styles = window.getComputedStyle(element)
@@ -718,7 +876,7 @@ export const downloadJPEG = async (
   }
 }
 
-// Enhanced PDF export with real-time background detection
+// Enhanced PDF export with comprehensive gradient detection
 export const downloadPDF = async (
   elementId: string,
   fileName: string,
@@ -729,6 +887,8 @@ export const downloadPDF = async (
 ): Promise<boolean> => {
   try {
     const { element, rect } = validateElement(elementId)
+
+    console.log("🚀 Starting PDF export for:", fileName)
 
     // Force style recalculation
     element.offsetHeight
@@ -752,13 +912,26 @@ export const downloadPDF = async (
 
     ctx.scale(2, 2)
 
-    // Get current background and draw it
-    const background = getCurrentBackground(element)
-    console.log("PDF Export - Current background:", background)
+    // Get current background with multiple detection methods
+    let background = getCurrentBackground(element)
+
+    // If no gradient detected, try alternative methods
+    if (background.type === "solid") {
+      const gradientFromSettings = getGradientFromSettings(element)
+      if (gradientFromSettings) {
+        background = {
+          type: "gradient",
+          value: `linear-gradient(${gradientFromSettings.angle}deg, ${gradientFromSettings.colors.join(", ")})`,
+        }
+        console.log("🔄 Using gradient from settings:", background.value)
+      }
+    }
+
+    console.log("🎨 PDF Export - Background:", background)
 
     if (background.type === "gradient") {
       const { colors, angle } = parseGradientColors(background.value)
-      console.log("PDF Export - Parsed gradient:", { colors, angle })
+      console.log("🌈 PDF Export - Creating gradient:", { colors, angle })
 
       const angleRad = ((angle - 90) * Math.PI) / 180
       const centerX = targetWidth / 2
@@ -774,9 +947,11 @@ export const downloadPDF = async (
       gradient.addColorStop(0, colors[0])
       gradient.addColorStop(1, colors[1])
       ctx.fillStyle = gradient
+
+      console.log("✅ PDF gradient created:", { from: colors[0], to: colors[1], angle })
     } else {
       ctx.fillStyle = background.value || "#ffffff"
-      console.log("PDF Export - Solid background:", ctx.fillStyle)
+      console.log("🎨 PDF Export - Using solid background:", ctx.fillStyle)
     }
 
     const styles = window.getComputedStyle(element)

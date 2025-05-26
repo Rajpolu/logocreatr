@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import * as LucideIcons from "lucide-react"
 
@@ -80,6 +80,39 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
     return baseSize
   }
 
+  // Enhanced background style generation with better gradient handling
+  const getBackgroundStyle = () => {
+    if (settings.useGradient) {
+      const gradient = `linear-gradient(135deg, ${settings.backgroundColor}, ${settings.gradientColor})`
+      console.log("🎨 LogoPreview - Generated gradient:", gradient)
+      return {
+        background: gradient,
+        backgroundImage: gradient, // Ensure both properties are set
+      }
+    } else {
+      return {
+        backgroundColor: settings.backgroundColor,
+        background: settings.backgroundColor,
+      }
+    }
+  }
+
+  // Add data attributes for export detection
+  useEffect(() => {
+    if (containerRef.current && settings.useGradient) {
+      const gradientData = {
+        colors: [settings.backgroundColor, settings.gradientColor],
+        angle: 135,
+      }
+      containerRef.current.setAttribute("data-gradient", JSON.stringify(gradientData))
+      console.log("📊 Added gradient data attribute:", gradientData)
+    } else if (containerRef.current) {
+      containerRef.current.removeAttribute("data-gradient")
+    }
+  }, [settings.useGradient, settings.backgroundColor, settings.gradientColor])
+
+  const backgroundStyle = getBackgroundStyle()
+
   return (
     <div className="flex flex-col items-center justify-center h-full w-full">
       <Card
@@ -101,9 +134,7 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: settings.useGradient
-              ? `linear-gradient(135deg, ${settings.backgroundColor}, ${settings.gradientColor})`
-              : settings.backgroundColor,
+            ...backgroundStyle, // Apply the enhanced background style
             borderRadius: `${settings.borderRadius}%`,
             padding: `${settings.padding}%`,
             border: `${settings.borderWidth}px solid ${settings.borderColor}`,
@@ -111,6 +142,9 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
             position: "relative", // Ensure proper positioning of children
           }}
           className={shadowClasses[settings.shadow as keyof typeof shadowClasses]}
+          data-use-gradient={settings.useGradient}
+          data-background-color={settings.backgroundColor}
+          data-gradient-color={settings.gradientColor}
         >
           <div className={`flex ${getContentLayout()} w-full h-full`}>
             {/* Icon */}
