@@ -63,26 +63,6 @@ REPLICATE_API_TOKEN=your_replicate_token
 - **Add Presets**: Create new templates in `components/preset-selector.tsx`
 - **Modify Export**: Customize export options in `lib/download-utils.ts`
 
-## 📁 Project Structure
-
-\`\`\`
-logo-creator/
-├── app/                    # Next.js app directory
-│   ├── api/               # API routes
-│   ├── globals.css        # Global styles
-│   └── page.tsx          # Main application
-├── components/            # React components
-│   ├── ui/               # shadcn/ui components
-│   ├── color-picker.tsx  # Color selection
-│   ├── icon-selector.tsx # Icon browser
-│   ├── logo-preview.tsx  # Live preview
-│   └── text-customization.tsx # Typography controls
-├── lib/                  # Utilities
-│   ├── download-utils.ts # Export functionality
-│   └── history-reducer.ts # State management
-└── README.md
-\`\`\`
-
 ## 🤝 Contributing
 
 We welcome contributions! Here's how to get started:
