@@ -115,18 +115,18 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="rounded-full">
+        <Button variant="outline" className="rounded-full min-w-[44px]">
           <Download className="h-4 w-4 mr-2" />
           Export Logo
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px] xl:max-w-[1100px]">
         <DialogHeader>
           <DialogTitle>Export Logo</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="format" className="mt-4">
-          <TabsList className="grid grid-cols-3 mb-4 rounded-lg">
+          <TabsList className="grid grid-cols-1 sm:grid-cols-3 mb-4 rounded-lg">
             <TabsTrigger value="format" className="rounded-lg">
               Format
             </TabsTrigger>
@@ -139,9 +139,9 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
           </TabsList>
 
           <TabsContent value="format" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div
-                className={`border rounded-lg p-4 text-center cursor-pointer transition-all ${
+                className={`border rounded-lg p-4 sm:p-8 text-center cursor-pointer transition-all ${
                   format === "svg" ? "border-primary bg-primary/10" : "hover:bg-muted"
                 }`}
                 onClick={() => setFormat("svg")}
@@ -150,7 +150,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
                 <div className="text-xs text-muted-foreground">Vector format, scalable</div>
               </div>
               <div
-                className={`border rounded-lg p-4 text-center cursor-pointer transition-all ${
+                className={`border rounded-lg p-4 sm:p-8 text-center cursor-pointer transition-all ${
                   format === "png" ? "border-primary bg-primary/10" : "hover:bg-muted"
                 }`}
                 onClick={() => setFormat("png")}
@@ -159,7 +159,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
                 <div className="text-xs text-muted-foreground">Raster format with transparency</div>
               </div>
               <div
-                className={`border rounded-lg p-4 text-center cursor-pointer transition-all ${
+                className={`border rounded-lg p-4 sm:p-8 text-center cursor-pointer transition-all ${
                   format === "jpeg" ? "border-primary bg-primary/10" : "hover:bg-muted"
                 }`}
                 onClick={() => setFormat("jpeg")}
@@ -168,7 +168,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
                 <div className="text-xs text-muted-foreground">Compressed, no transparency</div>
               </div>
               <div
-                className={`border rounded-lg p-4 text-center cursor-pointer transition-all ${
+                className={`border rounded-lg p-4 sm:p-8 text-center cursor-pointer transition-all ${
                   format === "pdf" ? "border-primary bg-primary/10" : "hover:bg-muted"
                 }`}
                 onClick={() => setFormat("pdf")}
@@ -208,7 +208,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
               </div>
 
               {sizeOption === "custom" && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="custom-width">Width (px)</Label>
                     <Input
@@ -333,7 +333,7 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
         </Tabs>
 
         <div className="flex justify-end mt-4">
-          <Button onClick={handleExport} disabled={loading} className="rounded-lg">
+          <Button onClick={handleExport} disabled={loading} className="rounded-lg min-w-[44px]">
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
