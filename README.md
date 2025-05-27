@@ -26,7 +26,7 @@ A modern, web-based logo creation tool built with Next.js, React, and TypeScript
 
 \`\`\`bash
 # Clone the repository
-git clone https://github.com/Rajpolu/Lumo.git
+git clone https://github.com/your-username/logo-creator.git
 
 # Navigate to project directory
 cd logo-creator
@@ -62,6 +62,26 @@ REPLICATE_API_TOKEN=your_replicate_token
 - **Add Fonts**: Extend font options in `components/text-customization.tsx`
 - **Add Presets**: Create new templates in `components/preset-selector.tsx`
 - **Modify Export**: Customize export options in `lib/download-utils.ts`
+
+## 📁 Project Structure
+
+\`\`\`
+logo-creator/
+├── app/                    # Next.js app directory
+│   ├── api/               # API routes
+│   ├── globals.css        # Global styles
+│   └── page.tsx          # Main application
+├── components/            # React components
+│   ├── ui/               # shadcn/ui components
+│   ├── color-picker.tsx  # Color selection
+│   ├── icon-selector.tsx # Icon browser
+│   ├── logo-preview.tsx  # Live preview
+│   └── text-customization.tsx # Typography controls
+├── lib/                  # Utilities
+│   ├── download-utils.ts # Export functionality
+│   └── history-reducer.ts # State management
+└── README.md
+\`\`\`
 
 ## 🤝 Contributing
 

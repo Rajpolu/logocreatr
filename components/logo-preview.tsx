@@ -250,7 +250,7 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
           </div>
         </div>
       </Card>
-      <div className="text-center text-gray-500 max-w-md">
+      <div className="text-center text-gray-500 max-w-sm">
         <p>Customize your logo by adjusting the settings on the left panel.</p>
         <p className="mt-2">When you're happy with your design, click Export to save your logo.</p>
       </div>
