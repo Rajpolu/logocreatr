@@ -52,6 +52,13 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
     try {
       setLoading(true)
 
+      console.log("🚀 Starting export with settings:", settings)
+      console.log("📊 Current background settings:", {
+        useGradient: settings?.useGradient,
+        backgroundColor: settings?.backgroundColor,
+        gradientColor: settings?.gradientColor,
+      })
+
       // Determine export size
       let width = 512
       let height = 512
@@ -69,32 +76,36 @@ export default function ExportDialog({ logoName, settings }: ExportDialogProps) 
         height = socialMediaPresets[presetIndex].height
       }
 
-      // Export based on selected format
+      // Export based on selected format with settings passed
       let success = false
       const fileName = logoName || "logo"
 
       switch (format) {
         case "svg":
-          success = downloadSVG("logo-preview", fileName)
+          success = downloadSVG("logo-preview", fileName, settings)
           break
         case "png":
-          success = await downloadPNG("logo-preview", fileName, width, height)
+          success = await downloadPNG("logo-preview", fileName, width, height, settings)
           break
         case "jpeg":
-          success = await downloadJPEG("logo-preview", fileName, width, height, jpegQuality, jpegBackground)
+          success = await downloadJPEG("logo-preview", fileName, width, height, jpegQuality, jpegBackground, settings)
           break
         case "pdf":
-          success = await downloadPDF("logo-preview", fileName, width, height, pdfSize, pdfOrientation)
+          success = await downloadPDF("logo-preview", fileName, width, height, pdfSize, pdfOrientation, settings)
           break
       }
 
       if (success) {
+        console.log("✅ Export completed successfully")
         setTimeout(() => {
           setOpen(false)
         }, 500)
+      } else {
+        console.error("❌ Export failed")
+        alert(`Failed to export as ${format}. Please try again.`)
       }
     } catch (error) {
-      console.error(`Error exporting as ${format}:`, error)
+      console.error(`❌ Error exporting as ${format}:`, error)
       alert(`Failed to export as ${format}. Please try again.`)
     } finally {
       setLoading(false)

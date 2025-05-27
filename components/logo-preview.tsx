@@ -80,34 +80,68 @@ export default function LogoPreview({ settings }: LogoPreviewProps) {
     return baseSize
   }
 
-  // Enhanced background style generation with better gradient handling
+  // Enhanced background style generation with forced style updates
   const getBackgroundStyle = () => {
     if (settings.useGradient) {
       const gradient = `linear-gradient(135deg, ${settings.backgroundColor}, ${settings.gradientColor})`
       console.log("🎨 LogoPreview - Generated gradient:", gradient)
+
       return {
         background: gradient,
         backgroundImage: gradient, // Ensure both properties are set
+        // Force browser to recognize the change
+        WebkitBackgroundImage: gradient,
+        MozBackgroundImage: gradient,
       }
     } else {
       return {
         backgroundColor: settings.backgroundColor,
         background: settings.backgroundColor,
+        backgroundImage: "none", // Clear any previous gradient
       }
     }
   }
 
-  // Add data attributes for export detection
+  // Enhanced effect to ensure DOM updates are applied immediately
   useEffect(() => {
-    if (containerRef.current && settings.useGradient) {
-      const gradientData = {
-        colors: [settings.backgroundColor, settings.gradientColor],
-        angle: 135,
+    if (containerRef.current) {
+      const element = containerRef.current
+
+      // Force immediate style application
+      const backgroundStyle = getBackgroundStyle()
+      Object.assign(element.style, backgroundStyle)
+
+      // Add comprehensive data attributes for export detection
+      if (settings.useGradient) {
+        const gradientData = {
+          colors: [settings.backgroundColor, settings.gradientColor],
+          angle: 135,
+          useGradient: true,
+        }
+        element.setAttribute("data-gradient", JSON.stringify(gradientData))
+        element.setAttribute("data-use-gradient", "true")
+        element.setAttribute("data-background-color", settings.backgroundColor)
+        element.setAttribute("data-gradient-color", settings.gradientColor)
+
+        console.log("📊 Updated gradient data attributes:", gradientData)
+      } else {
+        element.removeAttribute("data-gradient")
+        element.setAttribute("data-use-gradient", "false")
+        element.setAttribute("data-background-color", settings.backgroundColor)
+        element.removeAttribute("data-gradient-color")
+
+        console.log("📊 Updated solid background data attributes")
       }
-      containerRef.current.setAttribute("data-gradient", JSON.stringify(gradientData))
-      console.log("📊 Added gradient data attribute:", gradientData)
-    } else if (containerRef.current) {
-      containerRef.current.removeAttribute("data-gradient")
+
+      // Force reflow to ensure styles are applied
+      element.offsetHeight
+
+      console.log("🔄 LogoPreview - Style update applied:", {
+        useGradient: settings.useGradient,
+        backgroundColor: settings.backgroundColor,
+        gradientColor: settings.gradientColor,
+        computedStyle: window.getComputedStyle(element).background,
+      })
     }
   }, [settings.useGradient, settings.backgroundColor, settings.gradientColor])
 

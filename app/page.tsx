@@ -85,8 +85,17 @@ export default function Home() {
   // Optimized change handler with immediate UI feedback
   const handleChange = useCallback(
     (key: string, value: any) => {
+      console.log("🔄 Settings change:", { key, value, currentSettings: current })
+
       // For critical UI updates, apply immediately
-      if (key === "iconName" || key === "textEnabled" || key === "activeTab") {
+      if (
+        key === "iconName" ||
+        key === "textEnabled" ||
+        key === "activeTab" ||
+        key === "useGradient" ||
+        key === "backgroundColor" ||
+        key === "gradientColor"
+      ) {
         dispatch({
           type: "UPDATE",
           payload: {
@@ -117,6 +126,8 @@ export default function Home() {
   const applyPreset = useCallback(
     (preset: any) => {
       setIsLoading(true)
+      console.log("🎨 Applying preset:", preset)
+
       // Use requestAnimationFrame for smooth UI updates
       requestAnimationFrame(() => {
         dispatch({
@@ -162,6 +173,15 @@ export default function Home() {
       }
     }
   })
+
+  // Debug current settings
+  useEffect(() => {
+    console.log("📊 Current settings updated:", {
+      useGradient: current.useGradient,
+      backgroundColor: current.backgroundColor,
+      gradientColor: current.gradientColor,
+    })
+  }, [current.useGradient, current.backgroundColor, current.gradientColor])
 
   return (
     <main className="min-h-screen p-4 md:p-8 bg-gray-50">
@@ -218,7 +238,7 @@ export default function Home() {
             {/* Feedback button */}
             <FeedbackDialog />
 
-            {/* Export dialog */}
+            {/* Export dialog with current settings */}
             <ExportDialog logoName={current.iconName || "logo"} settings={current} />
           </div>
         </header>
@@ -386,7 +406,10 @@ export default function Home() {
                           <Switch
                             id="use-gradient"
                             checked={current.useGradient}
-                            onCheckedChange={(checked) => handleChange("useGradient", checked)}
+                            onCheckedChange={(checked) => {
+                              console.log("🎨 Gradient toggle:", checked)
+                              handleChange("useGradient", checked)
+                            }}
                           />
                         </div>
 
@@ -394,7 +417,10 @@ export default function Home() {
                           <label className="block text-sm mb-1">Background Color</label>
                           <ColorPicker
                             color={current.backgroundColor}
-                            onChange={(color) => handleChange("backgroundColor", color)}
+                            onChange={(color) => {
+                              console.log("🎨 Background color change:", color)
+                              handleChange("backgroundColor", color)
+                            }}
                             label="Background"
                           />
                         </div>
@@ -404,7 +430,10 @@ export default function Home() {
                             <label className="block text-sm mb-1">Gradient Color</label>
                             <ColorPicker
                               color={current.gradientColor}
-                              onChange={(color) => handleChange("gradientColor", color)}
+                              onChange={(color) => {
+                                console.log("🎨 Gradient color change:", color)
+                                handleChange("gradientColor", color)
+                              }}
                               label="Gradient"
                             />
                           </div>

@@ -26,7 +26,7 @@ A modern, web-based logo creation tool built with Next.js, React, and TypeScript
 
 \`\`\`bash
 # Clone the repository
-git clone https://github.com/Rajpolu/logocreatr.git
+git clone https://github.com/your-username/logo-creator.git
 
 # Navigate to project directory
 cd logo-creator
